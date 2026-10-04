@@ -1,0 +1,29 @@
+# ---- Node / Vite / React (frontend) ----
+node_modules/
+dist/
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts
+
+# ---- Python / FastAPI (backend) ----
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# ---- Environment secrets (keep the .env.example template) ----
+.env
+.env.*
+!**/.env.example
+
+# ---- Runtime / user-uploaded data ----
+*.db
+*.sqlite3
+backend/media/
+
+# ---- Editor / OS ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
