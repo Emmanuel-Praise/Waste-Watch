@@ -497,13 +497,14 @@ def _set_state(db: Session, pending: Optional["PendingIntake"], state: str) -> N
 def _ask_intent_message() -> str:
     return (
         "*Waste Watch* \u2013 Bamenda Municipality\U0001F44B\n\n"
-        "Hello! I am Waste Watch, your waste-and-earnings assistant.\n\n"
-        "What do you want to do?\n\n"
-        "1\uFE0F\u20E3 *Report waste* \u2013 earn 10%\n"
-        "2\uFE0F\u20E3 *Get a job* as EcoCollector \u2013 earn 55%\n"
-        "3\uFE0F\u20E3 *Buy waste* as a Vendor\n"
-        "4\uFE0F\u20E3 *See the marketplace*\n\n"
-        "Reply with *1, 2, 3 or 4* (or *no* to stop)."
+        "Hello! I am *Waste Watch* \U0001F60A, your waste-and-earnings assistant. "
+        "I turn Bamenda's waste into money \u2014 right here on WhatsApp, no forms, no stress. \u267B\ufe0f\n\n"
+        "What do you want to do today? \U0001F447\n\n"
+        "1\uFE0F\u20E3 \U0001F5D1\ufe0f Report waste \u2013 earn *10% when sold*\n"
+        "2\uFE0F\u20E3 \U0001F69B Get a job as EcoCollector \u2013 earn *55% per job*\n"
+        "3\uFE0F\u20E3 \U0001F3ED Buy waste as a Vendor \u2013 get new-stock alerts\n"
+        "4\uFE0F\u20E3 \U0001F6D2 See the marketplace \u2013 live prices per kg\n\n"
+        "Just reply with *1, 2, 3 or 4* \u2705"
     )
 
 
@@ -605,27 +606,27 @@ def _ack_for_image(analysis) -> str:
 
 def _welcome_message() -> str:
     return (
-        "*Waste Watch - Bamenda Municipality*\n\n"
-        "Hello! \U0001F44B I am Waste Watch, your waste-and-earnings assistant. "
-        "Everything happens right here on WhatsApp.\n\n"
-        "What do you want to do?\n\n"
-        "1\uFE0F\u20E3 *Report waste* \u2013 earn 10%\n"
-        "2\uFE0F\u20E3 *Get a job* as EcoCollector \u2013 earn 55%\n"
-        "3\uFE0F\u20E3 *Buy waste* as a Vendor\n"
-        "4\uFE0F\u20E3 *See the marketplace*\n\n"
-        "Reply with *1, 2, 3 or 4* and I will explain that option step by step."
+        "*Waste Watch - Bamenda Municipality* \U0001F44B\n\n"
+        "Hello! I am *Waste Watch* \U0001F60A, your waste-and-earnings assistant. "
+        "I turn Bamenda's waste into money \u2014 right here on WhatsApp, no forms, no stress. \u267B\ufe0f\n\n"
+        "What do you want to do today? \U0001F447\n\n"
+        "1\uFE0F\u20E3 \U0001F5D1\ufe0f Report waste \u2013 earn *10% when sold*\n"
+        "2\uFE0F\u20E3 \U0001F69B Get a job as EcoCollector \u2013 earn *55% per job*\n"
+        "3\uFE0F\u20E3 \U0001F3ED Buy waste as a Vendor \u2013 get new-stock alerts\n"
+        "4\uFE0F\u20E3 \U0001F6D2 See the marketplace \u2013 live prices per kg\n\n"
+        "Just reply with *1, 2, 3 or 4* \u2705 and I will explain that option step by step."
     )
 
 
 def _services_overview() -> str:
     """Short menu of everything Waste Watch offers (details follow on selection)."""
     return (
-        "*Waste Watch \u2013 what we offer*\U0001F3AB\n\n"
-        "1\uFE0F\u20E3 *Report waste* \u2013 earn 10%\n"
-        "2\uFE0F\u20E3 *Get a job* as EcoCollector \u2013 earn 55%\n"
-        "3\uFE0F\u20E3 *Buy waste* as a Vendor\n"
-        "4\uFE0F\u20E3 *See the marketplace*\n\n"
-        "Reply with *1, 2, 3 or 4* and I will explain that option step by step."
+        "*Waste Watch \u2013 what we offer* \U0001F3AB\n\n"
+        "1\uFE0F\u20E3 \U0001F5D1\ufe0f Report waste \u2013 earn *10% when sold*\n"
+        "2\uFE0F\u20E3 \U0001F69B Get a job as EcoCollector \u2013 earn *55% per job*\n"
+        "3\uFE0F\u20E3 \U0001F3ED Buy waste as a Vendor \u2013 get new-stock alerts\n"
+        "4\uFE0F\u20E3 \U0001F6D2 See the marketplace \u2013 live prices per kg\n\n"
+        "Just reply with *1, 2, 3 or 4* \u2705 and I will explain that option step by step."
     )
 
 
@@ -1200,28 +1201,21 @@ def handle_citizen_message(
             )
             _clear_pending(db, citizen.phone)
         elif _looks_like_service_request(description):
-            reply = _ai_reply(
-                citizen_text=description,
-                guidance=(
-                    "The citizen is interested in one of Waste Watch's other "
-                    "services (EcoCollector earning program, Waste Vendor program "
-                    "or the marketplace), not a new report. Briefly introduce "
-                    "those services - reporting gives a 10% commission, "
-                    "EcoCollectors earn 55% per job, Vendors buy sorted material "
-                    "with new-stock alerts, and the marketplace has live per-kg "
-                    "prices - then ask which one they'd like to start with."
-                ),
-                fallback=_services_overview(),
-            )
+            # Service questions get the exact designed menu - never paraphrased.
+            reply = _services_overview()
             _set_state(db, pending, "idle")
         else:
             reply = _ai_reply(
                 citizen_text=description,
                 guidance=(
                     "You just asked what the citizen would like to do and did not "
-                    "understand their answer. Gently re-list the options: report "
-                    "waste, earn as an EcoCollector, sell as a Vendor, or browse "
-                    "the marketplace."
+                    "understand their answer. Re-send the menu EXACTLY as designed "
+                    "below - copy it word for word, do not rephrase: "
+                    "\"*Waste Watch* - Bamenda Municipality. Hello! I am *Waste Watch*, "
+                    "your waste-and-earnings assistant. 1 Report waste - earn *10% when sold*. "
+                    "2 Get a job as EcoCollector - earn *55% per job*. 3 Buy waste as a Vendor - "
+                    "get new-stock alerts. 4 See the marketplace - live prices per kg. "
+                    "Just reply with *1, 2, 3 or 4*.\""
                 ),
                 fallback=_ask_intent_message(),
             )
@@ -1279,18 +1273,9 @@ def handle_citizen_message(
             )
     else:  # idle / fresh conversation
         if _looks_like_greeting(description.lower()):
-            reply = _ai_reply(
-                citizen_text=description,
-                guidance=(
-                    "FACT: the citizen sent only this greeting text - no photo, no "
-                    "location. Greet them warmly and briefly introduce what Waste "
-                    "Watch offers: report waste (10% commission when it sells), "
-                    "the EcoCollector earning program (55% per job), the Waste "
-                    "Vendor program (buy sorted material, get new-stock alerts) "
-                    "and the marketplace. Then ask what they would like to do."
-                ),
-                fallback=_ask_intent_message(),
-            )
+            # Greetings always get the exact designed welcome text -
+            # never an AI paraphrase - so the menu design stays intact.
+            reply = _welcome_message()
             _set_state(db, pending, "asking_intent")
         elif _looks_like_no(description):
             reply = _ai_reply(
@@ -1305,19 +1290,8 @@ def handle_citizen_message(
             )
             _clear_pending(db, citizen.phone)
         elif _looks_like_service_request(description):
-            reply = _ai_reply(
-                citizen_text=description,
-                guidance=(
-                    "The citizen is asking about Waste Watch's services - likely "
-                    "the EcoCollector earning program, the Waste Vendor program, "
-                    "the marketplace, or reporting waste. Introduce all four "
-                    "clearly and briefly: report waste (10% commission), "
-                    "EcoCollector (55% per job), Vendor (buy sorted material with "
-                    "new-stock alerts), Marketplace (live listings with per-kg "
-                    "prices). Then ask which one they would like to start with."
-                ),
-                fallback=_services_overview(),
-            )
+            # Service questions get the exact designed menu - never paraphrased.
+            reply = _services_overview()
         elif _looks_like_yes(description) or _looks_like_waste_report(description.lower()):
             reply = _ai_reply(
                 citizen_text=description,
@@ -1335,11 +1309,14 @@ def handle_citizen_message(
                 citizen_text=description,
                 guidance=(
                     "FACT: the citizen sent only this text - no photo, no "
-                    "location. Reply naturally with a SHORT numbered menu (1 report waste, "
-                    "2 EcoCollector job, 3 buy as Vendor, 4 marketplace), one line each, "
-                    "and ask them to reply 1-4. Do NOT dump full details or commands "
-                    "for all four offers at once - details follow after they pick. "
-                    "If their message is about waste, guide them to send a photo and location."
+                    "location. If their message is about waste, guide them to send a photo "
+                    "and location. Otherwise re-send the menu EXACTLY as designed below - "
+                    "copy it word for word, do not rephrase: "
+                    "\"*Waste Watch* - Bamenda Municipality. Hello! I am *Waste Watch*, "
+                    "your waste-and-earnings assistant. 1 Report waste - earn *10% when sold*. "
+                    "2 Get a job as EcoCollector - earn *55% per job*. 3 Buy waste as a Vendor - "
+                    "get new-stock alerts. 4 See the marketplace - live prices per kg. "
+                    "Just reply with *1, 2, 3 or 4*.\""
                 ),
                 fallback=_ask_intent_message(),
             )
