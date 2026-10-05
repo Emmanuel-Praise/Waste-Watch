@@ -497,15 +497,53 @@ def _set_state(db: Session, pending: Optional["PendingIntake"], state: str) -> N
 def _ask_intent_message() -> str:
     return (
         "*Waste Watch* \u2013 Bamenda Municipality\U0001F44B\n\n"
-        "Hello! I am Waste Watch, your waste-and-earnings assistant. Everything happens here on WhatsApp:\n\n"
-        "\u267B\ufe0f *1. Report waste & earn* \u2013 send a photo (or voice note) + location pin. "
-        "AI verifies it, opens a ticket, and you earn *10% commission* when a vendor buys it. Reply *report*.\n\n"
-        "\U0001F69B *2. Get employed as EcoCollector* \u2013 collect, sort & deliver waste, earn *55% of every job*. "
-        "Join: *earn Full Name | Zone*. Then reply *jobs* and *take WST-001*.\n\n"
-        "\U0001F3ED *3. Become a buyer (Waste Vendor)* \u2013 buy sorted plastic, organic & mixed waste at per-kg prices, "
-        "with WhatsApp alerts when new stock lands near you. Join: *sell Business | Owner | Zone | plastic,organic*.\n\n"
-        "\U0001F6D2 *4. Marketplace* \u2013 reply *market* for live listings, then *reserve WST-001 20* to reserve 20kg.\n\n"
-        "What do you want today? Reply *report*, *earn*, *sell* or *market* \u2013 or *no* if you need nothing now."
+        "Hello! I am Waste Watch, your waste-and-earnings assistant.\n\n"
+        "What do you want to do?\n\n"
+        "1\uFE0F\u20E3 *Report waste* \u2013 earn 10%\n"
+        "2\uFE0F\u20E3 *Get a job* as EcoCollector \u2013 earn 55%\n"
+        "3\uFE0F\u20E3 *Buy waste* as a Vendor\n"
+        "4\uFE0F\u20E3 *See the marketplace*\n\n"
+        "Reply with *1, 2, 3 or 4* (or *no* to stop)."
+    )
+
+
+def _report_detail_message() -> str:
+    return (
+        "*1\uFE0F\u20E3 Report waste & earn 10%*\n\n"
+        "Send these 3 things:\n\n"
+        "1. A *photo* of the waste (or a voice note)\n"
+        "2. A short *description*\n"
+        "3. Your *location* pin (paperclip icon \u2192 Location)\n\n"
+        "AI verifies it and opens a ticket. When a vendor buys your waste, "
+        "you earn a *10% commission*, paid automatically.\n\n"
+        "Send the *photo* now \U0001F4F8 \u2013 I will guide you from there."
+    )
+
+
+def _earn_detail_message() -> str:
+    return (
+        "*2\uFE0F\u20E3 Get a job as EcoCollector \u2013 earn 55%*\n\n"
+        "You collect, sort & deliver waste to vendors. You earn *55% of every "
+        "job* you complete.\n\n"
+        "To join, reply in one line:\n"
+        "*earn Full Name | Zone*\n\n"
+        "Example:\n"
+        "earn Achu Blessing | Bamenda Central\n\n"
+        "After joining, reply *jobs* to see work, then *take WST-001* to take a job."
+    )
+
+
+def _sell_detail_message() -> str:
+    return (
+        "*3\uFE0F\u20E3 Buy waste as a Vendor*\n\n"
+        "Buy sorted *plastic, organic & mixed* waste at per-kg prices "
+        "(plastic 150, organic 60, mixed 100 FCFA). You get WhatsApp alerts "
+        "when new stock is reported near you, and you may reserve all of a "
+        "listing \u2013 or only the part you need.\n\n"
+        "To join, reply in one line:\n"
+        "*sell Business | Owner | Zone | plastic,organic*\n\n"
+        "Example:\n"
+        "sell GreenPlast | Ngwa Emmanuel | Nkwen | plastic, organic"
     )
 
 
@@ -569,39 +607,25 @@ def _welcome_message() -> str:
     return (
         "*Waste Watch - Bamenda Municipality*\n\n"
         "Hello! \U0001F44B I am Waste Watch, your waste-and-earnings assistant. "
-        "All reporting and trading happens right here on WhatsApp. Here is exactly what you can do:\n\n"
-        "\u267B\ufe0f *1. Report waste & earn money*\n"
-        "Send a *photo* (or voice note) of the waste + a short description + your *location* pin. "
-        "AI verifies it, opens a ticket, and you earn a *10% commission* when a vendor buys it.\n\n"
-        "\U0001F69B *2. Get employed as EcoCollector*\n"
-        "Collect, sort & deliver waste to vendors and earn *55% of every job*. "
-        "Join now: *earn Full Name | Zone* (e.g. *earn Achu Blessing | Bamenda Central*).\n\n"
-        "\U0001F3ED *3. Become a buyer (Waste Vendor)*\n"
-        "Buy sorted plastic, organic & mixed waste at per-kg prices and get WhatsApp alerts "
-        "when new stock is reported near you. "
-        "Join now: *sell Business | Owner | Zone | plastic,organic*.\n\n"
-        "\U0001F6D2 *4. Marketplace*\n"
-        "Reply *market* for live listings, then *reserve WST-001 20* to reserve 20kg. "
-        "Reply *jobs* to see pickup jobs, *take WST-001* to take one.\n\n"
-        "To report waste right now, just send the *photo* \U0001F4F8 — I will guide you from there. "
-        "Thank you for helping keep Bamenda clean!"
+        "Everything happens right here on WhatsApp.\n\n"
+        "What do you want to do?\n\n"
+        "1\uFE0F\u20E3 *Report waste* \u2013 earn 10%\n"
+        "2\uFE0F\u20E3 *Get a job* as EcoCollector \u2013 earn 55%\n"
+        "3\uFE0F\u20E3 *Buy waste* as a Vendor\n"
+        "4\uFE0F\u20E3 *See the marketplace*\n\n"
+        "Reply with *1, 2, 3 or 4* and I will explain that option step by step."
     )
 
 
 def _services_overview() -> str:
-    """Compact list of everything Waste Watch offers (service-request reply)."""
+    """Short menu of everything Waste Watch offers (details follow on selection)."""
     return (
         "*Waste Watch \u2013 what we offer*\U0001F3AB\n\n"
-        "\u267B\ufe0f *1. Report waste & earn 10%* \u2013 photo/voice + location here on WhatsApp, "
-        "AI-verified, ticket opened. Reply *report* to start.\n\n"
-        "\U0001F69B *2. Get employed as EcoCollector (55% per job)* \u2013 collect, sort and "
-        "deliver waste to vendors. Join: *earn Full Name | Zone*, then *jobs* / *take WST-001*.\n\n"
-        "\U0001F3ED *3. Become a buyer (Waste Vendor)* \u2013 buy sorted plastic, organic and "
-        "mixed materials with per-kg prices and new-stock alerts. "
-        "Join: *sell Business | Owner | Zone | plastic,organic*.\n\n"
-        "\U0001F6D2 *4. Marketplace* \u2013 reply *market* for live listings, "
-        "*reserve WST-001 20* to reserve quantity.\n\n"
-        "Tell me what you'd like: reply *report*, *earn*, *sell* or *market*."
+        "1\uFE0F\u20E3 *Report waste* \u2013 earn 10%\n"
+        "2\uFE0F\u20E3 *Get a job* as EcoCollector \u2013 earn 55%\n"
+        "3\uFE0F\u20E3 *Buy waste* as a Vendor\n"
+        "4\uFE0F\u20E3 *See the marketplace*\n\n"
+        "Reply with *1, 2, 3 or 4* and I will explain that option step by step."
     )
 
 
@@ -905,9 +929,14 @@ def _handle_take_job(db: Session, citizen: User, text: str) -> str:
 
 def _handle_business_command(db: Session, citizen: User, text: str) -> Optional[str]:
     """Handle explicit WhatsApp business commands. None = not a command."""
-    if not _BUSINESS_CMD_RE.match((text or "").strip()):
+    cleaned = (text or "").strip()
+    # Numbered menu selection: "1".."4" (or "option 1").
+    menu_pick = re.match(r"^(?:option\s*)?([1-4])\s*$", cleaned, re.IGNORECASE)
+    if menu_pick:
+        return _handle_menu_pick(db, citizen, menu_pick.group(1))
+    if not _BUSINESS_CMD_RE.match(cleaned):
         return None
-    low = (text or "").strip().lower()
+    low = cleaned.lower()
     first = low.split()[0] if low.split() else ""
 
     if first in ("help", "menu"):
@@ -915,7 +944,7 @@ def _handle_business_command(db: Session, citizen: User, text: str) -> Optional[
     if first == "report":
         pending = get_pending(db, citizen.phone)
         _set_state(db, pending, "collecting")
-        return _collect_photo_message()
+        return _report_detail_message()
     if first in ("sell", "vendor"):
         return _handle_vendor_signup(db, citizen, text)
     if first in ("earn", "collector", "join"):
@@ -930,6 +959,19 @@ def _handle_business_command(db: Session, citizen: User, text: str) -> Optional[
     if first == "take":
         return _handle_take_job(db, citizen, text)
     return None
+
+
+def _handle_menu_pick(db: Session, citizen: User, pick: str) -> str:
+    """Explain one menu option in detail after the citizen picks 1-4."""
+    if pick == "1":
+        pending = get_pending(db, citizen.phone)
+        _set_state(db, pending, "collecting")
+        return _report_detail_message()
+    if pick == "2":
+        return _earn_detail_message()
+    if pick == "3":
+        return _sell_detail_message()
+    return _handle_market_list(db)
 
 
 def handle_citizen_message(
@@ -1293,17 +1335,11 @@ def handle_citizen_message(
                 citizen_text=description,
                 guidance=(
                     "FACT: the citizen sent only this text - no photo, no "
-                    "location. Reply naturally. This line handles Waste Watch for "
-                    "Bamenda Municipality. You MUST name all four offers directly "
-                    "with their exact commands: 1) report waste & earn 10% (reply "
-                    "*report*, then photo + location), 2) get employed as "
-                    "EcoCollector earning 55% per job (join: *earn Full Name | "
-                    "Zone*), 3) become a buyer of sorted waste (join: *sell "
-                    "Business | Owner | Zone | plastic,organic*), 4) marketplace "
-                    "(*market*, then *reserve WST-001 20*). If their message is "
-                    "about waste, guide them to send a photo and location. If it "
-                    "is not about waste, introduce all four services with commands "
-                    "and ask which they would like."
+                    "location. Reply naturally with a SHORT numbered menu (1 report waste, "
+                    "2 EcoCollector job, 3 buy as Vendor, 4 marketplace), one line each, "
+                    "and ask them to reply 1-4. Do NOT dump full details or commands "
+                    "for all four offers at once - details follow after they pick. "
+                    "If their message is about waste, guide them to send a photo and location."
                 ),
                 fallback=_ask_intent_message(),
             )

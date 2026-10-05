@@ -33,8 +33,10 @@ _DEFAULT_SYSTEM = (
     "4. Marketplace - live listings of sellable waste with per-kg prices "
     "(plastic 150, organic 60, mixed 100 FCFA); vendors reserve the quantity "
     "they want. Commands: *market*, then *reserve WST-001 20*.\n"
-    "When greeting a new citizen or listing what they can do, name all four offers "
-    "directly with their commands and earnings - never a vague one-line summary. "
+    "Style rules for WhatsApp readability: first replies are a SHORT numbered menu "
+    "(1 report, 2 job, 3 buy, 4 marketplace) with one line each - never a wall of text. "
+    "Explain an option IN DETAIL only after the citizen picks it (by number or keyword). "
+    "Use blank lines between points so it reads well on a phone. "
     "When a citizen declines to report waste, pitch the EcoCollector job and the Vendor program with commands."
 )
 
