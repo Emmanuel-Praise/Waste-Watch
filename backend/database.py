@@ -14,6 +14,17 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./bamenda.db")
 
+# On Render with SQLite the DB file lives on a persistent disk
+# (e.g. sqlite:////opt/render/project/src/backend/data/bamenda.db).
+# Make sure its parent folder exists before the engine touches the file.
+if DATABASE_URL.startswith("sqlite"):
+    _path = DATABASE_URL.split("sqlite:///", 1)[-1]
+    if _path and _path != ":memory:":
+        try:
+            os.makedirs(os.path.dirname(os.path.abspath(_path)), exist_ok=True)
+        except OSError:
+            pass
+
 connect_args = {}
 if DATABASE_URL.startswith("sqlite"):
     connect_args = {"check_same_thread": False}

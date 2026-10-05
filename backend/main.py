@@ -34,10 +34,18 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS configuration
+# CORS configuration: local dev plus the hosted frontend (set FRONTEND_URL
+# on Render, e.g. https://wastewatch-frontend.onrender.com).
+import os as _os
+
+_frontend_url = _os.getenv("FRONTEND_URL", "").strip().rstrip("/")
+_allowed = ["http://localhost:5173", "http://localhost:3000"]
+if _frontend_url and _frontend_url not in _allowed:
+    _allowed.append(_frontend_url)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=_allowed,
+    allow_origin_regex=r"https://.*\.onrender\.com",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

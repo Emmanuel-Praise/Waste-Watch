@@ -1,0 +1,51 @@
+services:
+  - type: web
+    name: wastewatch-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: DATABASE_URL
+        value: sqlite:////opt/render/project/src/backend/data/bamenda.db
+      - key: MEDIA_DIR
+        value: /opt/render/project/src/backend/data/media
+      - key: MESSAGE_CHANNEL
+        value: whatsapp
+      - key: FRONTEND_URL
+        sync: false
+      - key: WHATSAPP_ACCESS_TOKEN
+        sync: false
+      - key: WHATSAPP_PHONE_ID
+        sync: false
+      - key: WHATSAPP_VERIFY_TOKEN
+        sync: false
+      - key: WHATSAPP_APP_SECRET
+        sync: false
+      - key: WHATSAPP_API_VERSION
+        value: v25.0
+      - key: VISION_PROVIDER
+        value: openrouter
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: VISION_MODEL
+        value: nex-agi/nex-n2.5-pro:free
+      - key: TEXT_MODEL
+        value: nvidia/nemotron-3-super-120b-a12b:free
+      - key: NVIDIA_API_KEY
+        sync: false
+      - key: SPEECH_PROVIDER
+        value: elevenlabs
+      - key: ELEVENLABS_API_KEY
+        sync: false
+      - key: ELEVENLABS_VOICE_ID
+        value: 21m00Tcm4TlvDq8ikWAM
+      - key: COMMUNITY_HEAD_PHONE
+        sync: false
+    disk:
+      name: wastewatch-data
+      mountPath: /opt/render/project/src/backend/data
+      sizeGB: 1

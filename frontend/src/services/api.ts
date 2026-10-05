@@ -14,7 +14,8 @@ import {
   Collector,
 } from '../types';
 
-const API_BASE = '/api';
+const _API_ROOT = ((import.meta as unknown as { env?: Record<string, string | undefined> }).env?.VITE_API_URL ?? '').replace(/\/$/, '');
+const API_BASE = `${_API_ROOT}/api`;
 
 async function handleResponse<T>(response: Response, fallback: string): Promise<T> {
   if (!response.ok) {
