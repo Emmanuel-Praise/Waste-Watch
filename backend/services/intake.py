@@ -1205,20 +1205,9 @@ def handle_citizen_message(
             reply = _services_overview()
             _set_state(db, pending, "idle")
         else:
-            reply = _ai_reply(
-                citizen_text=description,
-                guidance=(
-                    "You just asked what the citizen would like to do and did not "
-                    "understand their answer. Re-send the menu EXACTLY as designed "
-                    "below - copy it word for word, do not rephrase: "
-                    "\"*Waste Watch* - Bamenda Municipality. Hello! I am *Waste Watch*, "
-                    "your waste-and-earnings assistant. 1 Report waste - earn *10% when sold*. "
-                    "2 Get a job as EcoCollector - earn *55% per job*. 3 Buy waste as a Vendor - "
-                    "get new-stock alerts. 4 See the marketplace - live prices per kg. "
-                    "Just reply with *1, 2, 3 or 4*.\""
-                ),
-                fallback=_ask_intent_message(),
-            )
+            # Unrecognized answer: re-show the exact designed menu.
+            # Never let the AI rephrase it - it turns the design into prose.
+            reply = _ask_intent_message()
             _set_state(db, pending, "asking_intent")
     elif state == "collecting":
         if _looks_like_no(description):
@@ -1305,21 +1294,23 @@ def handle_citizen_message(
             )
             _set_state(db, pending, "collecting")
         else:
-            reply = _ai_reply(
-                citizen_text=description,
-                guidance=(
-                    "FACT: the citizen sent only this text - no photo, no "
-                    "location. If their message is about waste, guide them to send a photo "
-                    "and location. Otherwise re-send the menu EXACTLY as designed below - "
-                    "copy it word for word, do not rephrase: "
-                    "\"*Waste Watch* - Bamenda Municipality. Hello! I am *Waste Watch*, "
-                    "your waste-and-earnings assistant. 1 Report waste - earn *10% when sold*. "
-                    "2 Get a job as EcoCollector - earn *55% per job*. 3 Buy waste as a Vendor - "
-                    "get new-stock alerts. 4 See the marketplace - live prices per kg. "
-                    "Just reply with *1, 2, 3 or 4*.\""
-                ),
-                fallback=_ask_intent_message(),
-            )
+            # Unknown text: waste-related messages get a short contextual nudge
+            # (photo + location only, NEVER a menu - the AI turns menus into prose).
+            # Everything else gets the exact designed menu template.
+            if _looks_like_waste_report(description.lower()):
+                reply = _ai_reply(
+                    citizen_text=description,
+                    guidance=(
+                        "FACT: the citizen described waste but sent no photo or "
+                        "location yet. Acknowledge their words in ONE short sentence, "
+                        "then ask for the photo of the waste and their location pin. "
+                        "Do NOT list services, offers, numbers or commands."
+                    ),
+                    needs=("photo", "location"),
+                    fallback=_report_detail_message(),
+                )
+            else:
+                reply = _ask_intent_message()
             _set_state(db, pending, "asking_intent")
 
     if channel_mode() == "whatsapp":
