@@ -1,10 +1,11 @@
 """
-Shared citizen intake flow.
+Shared citizen intake flow (WhatsApp-only entry point).
 
-Builds a report from citizen inputs (photo / voice note / message /
-location) using the Step 2 processing pipeline, persists any image, and
-sends the ticket response. Used by both the dev simulator and the
-WhatsApp webhook so the behavior is identical everywhere.
+Citizens, vendors and collectors all interact here: photo / voice note /
+message / location -> AI verification -> ticket, plus the marketplace
+business flows (vendor signup, collector signup, listings, reservations,
+jobs). The web frontend is a read-only council dashboard; all
+transactions happen in this chat.
 """
 
 import logging
@@ -18,7 +19,17 @@ from sqlalchemy.orm import Session
 
 from config import BASE_DIR, MEDIA_DIR, settings
 from database import SessionLocal
-from models import BrandNotified, CitizenMessage, PendingIntake, User, WasteReport
+from models import (
+    BrandNotified,
+    CitizenMessage,
+    Claim,
+    Collector,
+    Listing,
+    PendingIntake,
+    User,
+    Vendor,
+    WasteReport,
+)
 from schemas import LocationIn
 from services.llm import generate_text
 from services.messages import format_verification_request, send_ticket_response
@@ -486,11 +497,11 @@ def _set_state(db: Session, pending: Optional["PendingIntake"], state: str) -> N
 def _ask_intent_message() -> str:
     return (
         "*Waste Watch* \u2013 Bamenda Municipality\U0001F44B\n\n"
-        "Hello! Here's what we can help you with:\n\n"
-        "\u267B\ufe0f *Report waste* \u2013 you earn *10%* when it sells\n"
-        "\U0001F69B *EcoCollector* \u2013 earn *55%* per job collecting waste\n"
-        "\U0001F3ED *Waste Vendor* \u2013 buy sorted material, get stock alerts\n"
-        "\U0001F6D2 *Marketplace* \u2013 live listings with per-kg prices\n\n"
+        "Hello! Everything happens here on WhatsApp (no web forms):\n\n"
+        "\u267B\ufe0f *Report waste* \u2013 photo + location, you earn *10%* when it sells\n"
+        "\U0001F69B *EcoCollector* \u2013 earn *55%* per job. Join: *earn Full Name | Zone*\n"
+        "\U0001F3ED *Waste Vendor* \u2013 buy sorted material. Join: *sell Biz | Owner | Zone | plastic,organic*\n"
+        "\U0001F6D2 *Marketplace* \u2013 reply *market*, then *reserve WST-001 20*\n\n"
         "Reply *report*, *earn*, *sell* or *market* \u2013 or *no* if you don't "
         "need anything right now."
     )
@@ -527,10 +538,10 @@ def _adieu_message() -> str:
     return (
         "*Waste Watch* \U0001F3C1\n\n"
         "No problem \u2013 have a great day!\n\n"
-        "Remember, Waste Watch offers more than reporting:\n"
-        "\U0001F69B *EcoCollector* \u2013 earn *55%* of every delivery job\n"
-        "\U0001F3ED *Vendor program* \u2013 buy sorted material, get stock alerts\n"
-        "\U0001F6D2 *Marketplace* \u2013 live listings with per-kg prices\n\n"
+        "Remember, everything is on WhatsApp:\n"
+        "\U0001F69B *EcoCollector* \u2013 earn *55%* per job. Join: *earn Full Name | Zone*\n"
+        "\U0001F3ED *Vendor program* \u2013 buy sorted material. Join: *sell Biz | Owner | Zone | plastic,organic*\n"
+        "\U0001F6D2 *Marketplace* \u2013 reply *market* for live listings\n\n"
         "Just message *report*, *earn* or *sell* anytime and we'll get you started."
     )
 
@@ -554,20 +565,19 @@ def _ack_for_image(analysis) -> str:
 def _welcome_message() -> str:
     return (
         "*Waste Watch - Bamenda Municipality*\n\n"
-        "Welcome! This is the municipal waste reporting and recycling line.\n\n"
+        "Welcome! All reporting and trading happens right here on WhatsApp.\n\n"
         "We offer:\n"
         "\u267B\ufe0f *Report waste* \u2013 photo + location, AI-verified; you earn "
         "*10%* commission when it sells\n"
-        "\U0001F69B *EcoCollector* \u2013 earn *55%* of each delivery job\n"
-        "\U0001F3ED *Waste Vendor* \u2013 buy sorted materials, get stock alerts\n"
-        "\U0001F6D2 *Marketplace* \u2013 live listings with per-kg prices\n\n"
+        "\U0001F69B *EcoCollector* \u2013 earn *55%* of each delivery job (join: *earn Full Name | Zone*)\n"
+        "\U0001F3ED *Waste Vendor* \u2013 buy sorted materials (join: *sell Biz | Owner | Zone | plastic,organic*)\n"
+        "\U0001F6D2 *Marketplace* \u2013 reply *market*, then *reserve WST-001 20*\n\n"
         "To report waste in 3 steps:\n"
         "1. Send a *photo* of the waste\n"
         "2. Add a short *description*\n"
         "3. Attach your *location* pin (paperclip icon -> Location)\n\n"
         "We verify the photo with AI, create your ticket, and keep you updated "
-        "here. Say *earn* or *sell* any time for our other programs. "
-        "Thank you for helping keep Bamenda clean!"
+        "here. Thank you for helping keep Bamenda clean!"
     )
 
 
@@ -575,14 +585,14 @@ def _services_overview() -> str:
     """Compact list of everything Waste Watch offers (service-request reply)."""
     return (
         "*Waste Watch \u2013 what we offer*\U0001F3AB\n\n"
-        "\u267B\ufe0f *Report waste* \u2013 photo + location, AI-verified, ticket "
+        "\u267B\ufe0f *Report waste* \u2013 photo + location here on WhatsApp, AI-verified, ticket "
         "opened. You earn a *10% commission* when a vendor buys it.\n\n"
         "\U0001F69B *EcoCollector* \u2013 earn *55%* of every job: collect, sort and "
-        "deliver waste.\n\n"
+        "deliver waste. Join: *earn Full Name | Zone*\n\n"
         "\U0001F3ED *Waste Vendor* \u2013 businesses buy sorted plastic, organic and "
-        "mixed materials and get alerted whenever new stock is reported.\n\n"
-        "\U0001F6D2 *Marketplace* \u2013 browse live listings with per-kg prices and "
-        "reserve the quantity you need.\n\n"
+        "mixed materials and get alerted on new stock. Join: *sell Biz | Owner | Zone | plastic,organic*\n\n"
+        "\U0001F6D2 *Marketplace* \u2013 reply *market* for live listings with per-kg prices, "
+        "then *reserve WST-001 20* to reserve quantity.\n\n"
         "Tell me what you'd like: reply *report*, *earn*, *sell* or *market*."
     )
 
@@ -635,6 +645,285 @@ def _ai_reply(
     return reply
 
 
+# --------------------------------------------------------------------------- #
+# WhatsApp business commands (100% of transactions live here — no web forms)
+# --------------------------------------------------------------------------- #
+
+_BUSINESS_CMD_RE = re.compile(
+    r"^(report|sell|vendor|earn|collector|join|market|buy|listing|listings|reserve|jobs?|take|help|menu)\b",
+    re.IGNORECASE,
+)
+
+_VALID_WASTE_TYPES = ("plastic", "organic", "mixed")
+
+
+def has_location_message(lat: Optional[float], lng: Optional[float]) -> bool:
+    return lat is not None and lng is not None
+
+
+def _pipe_parts(text: str) -> list:
+    """Split 'cmd a | b | c' into ['a', 'b', 'c'] (command word removed)."""
+    body = re.sub(r"^[A-Za-z]+\s*", "", (text or "").strip(), count=1)
+    return [p.strip() for p in body.split("|")]
+
+
+def _find_vendor_by_phone(db: Session, phone: str) -> Optional[Vendor]:
+    digits = digits_of(phone)
+    if not digits:
+        return None
+    for vendor in db.query(Vendor).all():
+        if digits_of(vendor.phone) == digits:
+            return vendor
+    return None
+
+
+def _find_collector_by_phone(db: Session, phone: str) -> Optional[Collector]:
+    digits = digits_of(phone)
+    if not digits:
+        return None
+    for collector in db.query(Collector).all():
+        if digits_of(collector.phone) == digits:
+            return collector
+    return None
+
+
+def _find_listing_by_ticket(db: Session, ticket: str) -> Optional[Listing]:
+    from models import WasteReport as _Report
+
+    ticket = (ticket or "").strip().upper()
+    if not ticket:
+        return None
+    report = db.query(_Report).filter(_Report.ticket_id == ticket).first()
+    if not report:
+        # Allow short id prefix of a listing id as fallback.
+        listing = db.get(Listing, ticket)
+        return listing
+    return db.query(Listing).filter(Listing.report_id == report.id).first()
+
+
+def _handle_vendor_signup(db: Session, citizen: User, text: str) -> str:
+    existing = _find_vendor_by_phone(db, citizen.phone)
+    if existing:
+        return (
+            f"✅ You are already registered as vendor *{existing.business_name}* "
+            f"({', '.join(existing.waste_types or [])}). Reply *market* to see stock."
+        )
+    parts = _pipe_parts(text)
+    if len(parts) < 2 or not parts[0] or not parts[1]:
+        return (
+            "*Waste Vendor signup* 🏭\n\n"
+            "Reply in one line:\n"
+            "*sell Business | Owner | Zone | plastic,organic*\n\n"
+            "Example:\n"
+            "sell GreenPlast | Ngwa Emmanuel | Nkwen | plastic, organic"
+        )
+    business, owner = parts[0][:120], parts[1][:120]
+    zone = parts[2][:120] if len(parts) > 2 else ""
+    raw_types = (parts[3] if len(parts) > 3 else "plastic").lower()
+    waste_types = [t.strip() for t in re.split(r"[, ]+", raw_types) if t.strip() in _VALID_WASTE_TYPES]
+    if not waste_types:
+        waste_types = ["plastic"]
+    vendor = Vendor(
+        business_name=business,
+        owner_name=owner,
+        phone=citizen.phone,
+        waste_types=waste_types,
+        zone=zone or None,
+        status="active",
+    )
+    db.add(vendor)
+    db.commit()
+    return (
+        f"✅ Welcome, *{business}*! You will get WhatsApp alerts for "
+        f"*{' / '.join(waste_types)}* waste. Reply *market* to see current stock, "
+        f"then *reserve WST-001 20* to reserve quantity."
+    )
+
+
+def _handle_collector_signup(db: Session, citizen: User, text: str) -> str:
+    existing = _find_collector_by_phone(db, citizen.phone)
+    if existing:
+        return (
+            f"✅ You are already registered as EcoCollector *{existing.full_name}*. "
+            "Reply *jobs* to see open pickup jobs."
+        )
+    parts = _pipe_parts(text)
+    if not parts or not parts[0]:
+        return (
+            "*EcoCollector signup* 🚛\n\n"
+            "Reply in one line:\n"
+            "*earn Full Name | Zone*\n\n"
+            "Example:\n"
+            "earn Achu Blessing | Bamenda Central"
+        )
+    full_name = parts[0][:120]
+    zone = parts[1][:120] if len(parts) > 1 else ""
+    collector = Collector(
+        full_name=full_name,
+        phone=citizen.phone,
+        zone=zone or None,
+        status="active",
+    )
+    db.add(collector)
+    db.commit()
+    return (
+        f"✅ Welcome, *{full_name}*! You earn *55%* of every delivery job. "
+        "Reply *jobs* to see open pickup jobs."
+    )
+
+
+def _handle_market_list(db: Session) -> str:
+    listings = (
+        db.query(Listing)
+        .filter(Listing.available_kg > 0)
+        .order_by(Listing.created_at.desc())
+        .limit(5)
+        .all()
+    )
+    if not listings:
+        return (
+            "*Marketplace* 🛒\n\nNo open listings right now — new reports appear "
+            "here automatically. Keep reporting waste to create supply!"
+        )
+    lines = ["*Marketplace* 🛒 — reply *reserve TICKET kg* (e.g. reserve WST-001 20)\n"]
+    for listing in listings:
+        ticket = listing.report.ticket_id if listing.report else listing.id[:8]
+        addr = ""
+        if listing.report and getattr(listing.report, "location", None):
+            addr = (listing.report.location.address or "")[:60]
+        lines.append(
+            f"• *{ticket}* — {listing.waste_type.title()}, "
+            f"{listing.available_kg:.0f}kg avail. @ {listing.price_per_kg:.0f} FCFA/kg"
+            + (f"\n  📍 {addr}" if addr else "")
+        )
+    lines.append("\nVendors: reserve all or only the part you need.")
+    return "\n".join(lines)
+
+
+def _handle_reserve(db: Session, citizen: User, text: str) -> str:
+    from services.market import create_claim
+
+    match = re.match(r"^\s*reserve\s+(\S+)(?:\s+([\d.]+))?\s*$", (text or "").strip(), re.IGNORECASE)
+    if not match:
+        return "To reserve, reply: *reserve WST-001 20* (ticket + kg)."
+    ticket, kg_raw = match.group(1).upper(), match.group(2)
+    try:
+        quantity = float(kg_raw) if kg_raw else 0
+    except ValueError:
+        return "Quantity must be a number, e.g. *reserve WST-001 20*."
+    vendor = _find_vendor_by_phone(db, citizen.phone)
+    if not vendor:
+        return (
+            "You need a vendor account first. Join with:\n"
+            "*sell Business | Owner | Zone | plastic,organic*"
+        )
+    listing = _find_listing_by_ticket(db, ticket)
+    if not listing:
+        return f"Could not find listing *{ticket}*. Reply *market* for live tickets."
+    if listing.available_kg <= 0:
+        return f"*{ticket}* is fully reserved already. Reply *market* for others."
+    if not quantity or quantity <= 0:
+        quantity = listing.available_kg
+    try:
+        claim = create_claim(db, listing, vendor, quantity)
+    except ValueError as exc:
+        return f"Could not reserve: {exc}"
+    return (
+        f"✅ Reserved *{claim.quantity_kg:.0f}kg* of *{ticket}* "
+        f"({claim.total_value:.0f} FCFA). An EcoCollector can now take the job. "
+        f"Reporter earns {claim.reporter_commission:.0f} FCFA on delivery."
+    )
+
+
+def _handle_jobs_list(db: Session) -> str:
+    claims = (
+        db.query(Claim)
+        .filter(Claim.status == "reserved", Claim.collector_id.is_(None))
+        .order_by(Claim.created_at.desc())
+        .limit(5)
+        .all()
+    )
+    if not claims:
+        return "*Jobs* 🚛\n\nNo open pickup jobs right now — check back soon."
+    lines = ["*Open pickup jobs* 🚛 — reply *take TICKET*\n"]
+    for claim in claims:
+        ticket = claim.listing.report.ticket_id if claim.listing and claim.listing.report else claim.id[:8]
+        addr = ""
+        if claim.listing and claim.listing.report and getattr(claim.listing.report, "location", None):
+            addr = (claim.listing.report.location.address or "")[:60]
+        lines.append(
+            f"• *{ticket}* — {claim.quantity_kg:.0f}kg, you earn {claim.collector_payout:.0f} FCFA"
+            + (f"\n  📍 {addr}" if addr else "")
+        )
+    return "\n".join(lines)
+
+
+def _handle_take_job(db: Session, citizen: User, text: str) -> str:
+    from services.market import assign_collector
+
+    match = re.match(r"^\s*take\s+(\S+)\s*$", (text or "").strip(), re.IGNORECASE)
+    if not match:
+        return "To take a job, reply: *take WST-001*."
+    ticket = match.group(1).upper()
+    collector = _find_collector_by_phone(db, citizen.phone)
+    if not collector:
+        return (
+            "You need a collector account first. Join with:\n*earn Full Name | Zone*"
+        )
+    listing = _find_listing_by_ticket(db, ticket)
+    if not listing:
+        return f"Could not find listing *{ticket}*. Reply *jobs* for open jobs."
+    claim = (
+        db.query(Claim)
+        .filter(
+            Claim.listing_id == listing.id,
+            Claim.status == "reserved",
+            Claim.collector_id.is_(None),
+        )
+        .order_by(Claim.created_at.desc())
+        .first()
+    )
+    if not claim:
+        return f"No open job left on *{ticket}*. Reply *jobs* for others."
+    try:
+        assign_collector(db, claim, collector)
+    except ValueError as exc:
+        return f"Could not take job: {exc}"
+    return (
+        f"✅ Job taken! Pick up *{claim.quantity_kg:.0f}kg* for *{ticket}* and deliver "
+        f"to the vendor. You earn *{claim.collector_payout:.0f} FCFA* on delivery."
+    )
+
+
+def _handle_business_command(db: Session, citizen: User, text: str) -> Optional[str]:
+    """Handle explicit WhatsApp business commands. None = not a command."""
+    if not _BUSINESS_CMD_RE.match((text or "").strip()):
+        return None
+    low = (text or "").strip().lower()
+    first = low.split()[0] if low.split() else ""
+
+    if first in ("help", "menu"):
+        return _services_overview()
+    if first == "report":
+        pending = get_pending(db, citizen.phone)
+        _set_state(db, pending, "collecting")
+        return _collect_photo_message()
+    if first in ("sell", "vendor"):
+        return _handle_vendor_signup(db, citizen, text)
+    if first in ("earn", "collector", "join"):
+        # 'join' without context defaults to collector (most common).
+        return _handle_collector_signup(db, citizen, text)
+    if first in ("market", "buy", "listing", "listings"):
+        return _handle_market_list(db)
+    if first == "reserve":
+        return _handle_reserve(db, citizen, text)
+    if first in ("job", "jobs"):
+        return _handle_jobs_list(db)
+    if first == "take":
+        return _handle_take_job(db, citizen, text)
+    return None
+
+
 def handle_citizen_message(
     db: Session,
     *,
@@ -650,11 +939,10 @@ def handle_citizen_message(
 ) -> Optional[str]:
     """Route any inbound citizen message into the right next step.
 
-    Looks at whatever was sent (image, text/voice transcript, location),
-    reuses previously stored evidence, and replies appropriately:
-    - Reports must have both a photo/description AND a location; the missing
-      bit is requested. Photos are analyzed by the AI if a location is still
-      missing. Returns the reply text (already sent), or None if nothing to send.
+    WhatsApp is the only transaction channel (the web frontend is a
+    read-only council dashboard). Business commands (sell/earn/market/
+    reserve/jobs/take) are handled here; everything else falls through to
+    the waste-report state machine.
     """
     citizen = get_or_create_citizen(db, phone)
     digits = digits_of(citizen.phone)
@@ -681,6 +969,16 @@ def handle_citizen_message(
             send_branded_info(digits)
         reply_guidance(db, citizen.phone, reply)
         return reply
+
+    # Business commands take precedence over the report flow and must not
+    # pollute the pending report evidence (e.g. "market" is not a description).
+    if description and not photo_bytes and not has_location_message(lat, lng):
+        business = _handle_business_command(db, citizen, description)
+        if business is not None:
+            if channel_mode() == "whatsapp":
+                send_branded_info(digits)
+            reply_guidance(db, citizen.phone, business)
+            return business
 
     store_evidence(
         db,

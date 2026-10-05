@@ -194,26 +194,13 @@ def get_listing(listing_id: str, db: Session = Depends(get_db)):
     return _listing_out(listing)
 
 
-@router.post("/listings/{listing_id}/claims", response_model=ClaimOut, status_code=201)
-def reserve_quantity(listing_id: str, payload: ClaimCreate, db: Session = Depends(get_db)):
-    """A vendor reserves part (or all) of a listing's quantity."""
-    listing = db.get(Listing, listing_id)
-    if not listing:
-        raise HTTPException(status_code=404, detail="Listing not found")
-    if listing.status == "completed":
-        raise HTTPException(status_code=400, detail="This listing is fully delivered")
-
-    vendor = db.get(Vendor, payload.vendor_id)
-    if not vendor:
-        raise HTTPException(status_code=400, detail="Unknown vendor - please sign up first")
-    if vendor.status != "active":
-        raise HTTPException(status_code=400, detail="This vendor account is not active")
-
-    try:
-        claim = create_claim(db, listing, vendor, payload.quantity_kg)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
-    return _claim_out(claim)
+@router.post("/listings/{listing_id}/claims", status_code=410)
+def reserve_quantity(listing_id: str):
+    """Disabled: vendor reservations happen via WhatsApp ('reserve <ticket> <kg>')."""
+    raise HTTPException(
+        status_code=410,
+        detail="Web reservations are disabled. Please reserve via WhatsApp: send 'reserve <ticket_id> <kg>'.",
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -238,24 +225,13 @@ def list_claims(
     return [_claim_out(c) for c in claims]
 
 
-@router.post("/claims/{claim_id}/collector", response_model=ClaimOut)
-def take_job(claim_id: str, payload: CollectorAssign, db: Session = Depends(get_db)):
-    """A collector claims the pickup job for this reservation."""
-    claim = db.get(Claim, claim_id)
-    if not claim:
-        raise HTTPException(status_code=404, detail="Claim not found")
-
-    collector = db.get(Collector, payload.collector_id)
-    if not collector:
-        raise HTTPException(status_code=400, detail="Unknown collector - please sign up first")
-    if collector.status != "active":
-        raise HTTPException(status_code=400, detail="This collector account is not active")
-
-    try:
-        claim = assign_collector(db, claim, collector)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
-    return _claim_out(claim)
+@router.post("/claims/{claim_id}/collector", status_code=410)
+def take_job(claim_id: str):
+    """Disabled: collectors take jobs via WhatsApp ('take <ticket_id>')."""
+    raise HTTPException(
+        status_code=410,
+        detail="Web job-taking is disabled. Please take jobs via WhatsApp: send 'take <ticket_id>'.",
+    )
 
 
 @router.put("/claims/{claim_id}/status", response_model=ClaimOut)

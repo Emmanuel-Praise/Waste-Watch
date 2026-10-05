@@ -146,45 +146,13 @@ def _claim_summary(claim: Claim) -> dict:
 # Vendors
 # --------------------------------------------------------------------------- #
 
-@router.post("/vendors", response_model=VendorOut, status_code=201)
-async def register_vendor(
-    business_name: str = Form(...),
-    owner_name: str = Form(...),
-    phone: str = Form(...),
-    waste_types: str = Form("plastic"),
-    zone: str = Form(""),
-    id_number: str = Form(""),
-    id_card: Optional[UploadFile] = File(None),
-    db: Session = Depends(get_db),
-):
-    """Vendor signup with ID card. Vendors declare the waste types they buy."""
-    existing = (
-        db.query(Vendor).filter(Vendor.phone == _normalize_phone(phone)).first()
+@router.post("/vendors", status_code=410)
+async def register_vendor():
+    """Disabled: vendor signup happens via WhatsApp ('sell ...'). Dashboard is read-only."""
+    raise HTTPException(
+        status_code=410,
+        detail="Web vendor signup is disabled. Please sign up via WhatsApp: send 'sell <business> | <owner> | <zone> | <plastic,organic,mixed>'.",
     )
-    if existing:
-        raise HTTPException(status_code=400, detail="A vendor with this phone already exists")
-
-    id_card_url = None
-    if id_card is not None:
-        content = await id_card.read()
-        if content:
-            id_card_url = _persist_id_card(content, id_card.content_type or "image/jpeg")
-
-    vendor = Vendor(
-        id=str(uuid.uuid4()),
-        business_name=business_name.strip(),
-        owner_name=owner_name.strip(),
-        phone=_normalize_phone(phone),
-        id_number=id_number.strip() or None,
-        id_card_url=id_card_url,
-        waste_types=_normalize_types(waste_types),
-        zone=zone.strip() or None,
-        status="active",
-    )
-    db.add(vendor)
-    db.commit()
-    db.refresh(vendor)
-    return _vendor_out(vendor)
 
 
 @router.get("/vendors", response_model=List[VendorOut])
@@ -216,41 +184,13 @@ def vendor_claims(vendor_id: str, db: Session = Depends(get_db)):
 # Collectors
 # --------------------------------------------------------------------------- #
 
-@router.post("/collectors", response_model=CollectorOut, status_code=201)
-async def register_collector(
-    full_name: str = Form(...),
-    phone: str = Form(...),
-    zone: str = Form(""),
-    id_number: str = Form(""),
-    id_card: Optional[UploadFile] = File(None),
-    db: Session = Depends(get_db),
-):
-    """EcoCollector signup with ID card. Collectors earn per completed job."""
-    existing = (
-        db.query(Collector).filter(Collector.phone == _normalize_phone(phone)).first()
+@router.post("/collectors", status_code=410)
+async def register_collector():
+    """Disabled: collector signup happens via WhatsApp ('earn ...'). Dashboard is read-only."""
+    raise HTTPException(
+        status_code=410,
+        detail="Web collector signup is disabled. Please sign up via WhatsApp: send 'earn <full name> | <zone>'.",
     )
-    if existing:
-        raise HTTPException(status_code=400, detail="A collector with this phone already exists")
-
-    id_card_url = None
-    if id_card is not None:
-        content = await id_card.read()
-        if content:
-            id_card_url = _persist_id_card(content, id_card.content_type or "image/jpeg")
-
-    collector = Collector(
-        id=str(uuid.uuid4()),
-        full_name=full_name.strip(),
-        phone=_normalize_phone(phone),
-        id_number=id_number.strip() or None,
-        id_card_url=id_card_url,
-        zone=zone.strip() or None,
-        status="active",
-    )
-    db.add(collector)
-    db.commit()
-    db.refresh(collector)
-    return _collector_out(collector)
 
 
 @router.get("/collectors", response_model=List[CollectorOut])

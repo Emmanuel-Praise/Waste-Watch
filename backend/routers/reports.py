@@ -66,79 +66,21 @@ def list_reports(
     return query.offset(start).limit(limit).all()
 
 
-@router.post("", response_model=WasteReportOut, status_code=201)
-def create_report(
-    payload: ReportCreate,
-    db: Session = Depends(get_db),
-):
-    """Create a new waste report (structured path). Detect and link hotspots."""
-    location = Location(
-        id=str(uuid.uuid4()),
-        lat=payload.location.lat,
-        lng=payload.location.lng,
-        address=payload.location.address,
-    )
-    db.add(location)
-    db.flush()
-
-    hotspot, _created = find_or_create_hotspot(
-        db,
-        lat=payload.location.lat,
-        lng=payload.location.lng,
-        address=payload.location.address,
+@router.post("", status_code=410)
+def create_report():
+    """Disabled: citizen reports arrive via WhatsApp only (see /api/whatsapp/webhook)."""
+    raise HTTPException(
+        status_code=410,
+        detail="Web reporting is disabled. Please report waste via WhatsApp: send a photo + location pin.",
     )
 
-    report = WasteReport(
-        id=str(uuid.uuid4()),
-        ticket_id=next_ticket_id(db),
-        location_id=location.id,
-        waste_type=payload.waste_type.value,
-        severity=payload.severity.value,
-        priority=payload.priority.value,
-        description=payload.description,
-        image_url=payload.image_url,
-        status=Status.PENDING.value,
-        hotspot_id=hotspot.id,
-    )
-    db.add(report)
-    db.flush()
 
-    report.status_history.append(
-        StatusHistory(
-            id=str(uuid.uuid4()),
-            report_id=report.id,
-            from_status=None,
-            to_status=Status.PENDING.value,
-            notes="Report received",
-            created_at=datetime.utcnow(),
-        )
-    )
-
-    recompute_importance(db, hotspot)
-    db.commit()
-    db.refresh(report)
-    return report
-
-
-@router.post("/process", response_model=WasteReportOut, status_code=201)
-async def process_report_endpoint(
-    lat: float = Form(...),
-    lng: float = Form(...),
-    address: str = Form(...),
-    description: str = Form(""),
-    file: Optional[UploadFile] = File(None),
-    db: Session = Depends(get_db),
-):
-    """Process a citizen message/image + location through the AI pipeline and create a report."""
-    from schemas import LocationIn
-
-    image_bytes = await file.read() if file else None
-    location = LocationIn(lat=lat, lng=lng, address=address)
-    return process_report(
-        db,
-        location=location,
-        description=description,
-        image_bytes=image_bytes,
+@router.post("/process", status_code=410)
+async def process_report_endpoint():
+    """Disabled: citizen reports arrive via WhatsApp only (see /api/whatsapp/webhook)."""
+    raise HTTPException(
+        status_code=410,
+        detail="Web reporting is disabled. Please report waste via WhatsApp: send a photo + location pin.",
     )
 
 

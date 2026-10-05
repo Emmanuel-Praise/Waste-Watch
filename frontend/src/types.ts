@@ -216,12 +216,6 @@ export interface MarketStats {
   collectors: number;
 }
 
-export interface VoiceTranscription {
-  transcript: string;
-  provider: string;
-  language: string | null;
-}
-
 export const LISTING_STATUS_LABELS: Record<ListingStatus, string> = {
   available: 'Available',
   partially_claimed: 'Partly Reserved',

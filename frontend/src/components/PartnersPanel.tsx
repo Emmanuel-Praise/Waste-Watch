@@ -50,7 +50,7 @@ export function PartnersPanel() {
         </div>
         {vendors.length === 0 ? (
           <p className="px-5 py-8 text-center text-xs text-ink-mute">
-            No vendors yet — they sign up on the public Services page with an ID card.
+            No vendors yet — they sign up via WhatsApp (message “sell” to join).
           </p>
         ) : (
           <div className="divide-y divide-earth-50">
@@ -119,7 +119,7 @@ export function PartnersPanel() {
         </div>
         {collectors.length === 0 ? (
           <p className="px-5 py-8 text-center text-xs text-ink-mute">
-            No collectors yet — citizens looking for work sign up on the Services page.
+            No collectors yet — citizens join via WhatsApp (message “earn” to join).
           </p>
         ) : (
           <div className="divide-y divide-earth-50">

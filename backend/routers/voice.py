@@ -36,49 +36,9 @@ def _transcribe_with_elevenlabs(audio_bytes: bytes, mime_type: Optional[str]) ->
 
 
 @router.post("/transcribe")
-async def transcribe_voice(
-    file: UploadFile = File(...),
-    language: str = Form(""),
-):
-    """Transcribe a recorded voice message and return the text."""
-    audio_bytes = await file.read()
-    if not audio_bytes:
-        raise HTTPException(status_code=400, detail="Empty audio file")
-    if len(audio_bytes) > MAX_AUDIO_BYTES:
-        raise HTTPException(status_code=400, detail="Audio file too large (max 15 MB)")
-
-    mime_type = file.content_type or "audio/webm"
-    transcript: Optional[str] = None
-    provider_used = "elevenlabs"
-
-    # Voice reports prefer ElevenLabs (per product decision) when the key is set.
-    if settings.voice_prefer_elevenlabs:
-        transcript = _transcribe_with_elevenlabs(audio_bytes, mime_type)
-
-    if not transcript:
-        try:
-            provider = get_speech_provider()
-            transcript = provider.transcribe(audio_bytes, mime_type)
-            provider_used = type(provider).__name__.replace("SpeechToTextProvider", "").lower()
-        except Exception as exc:  # noqa: BLE001
-            logger.error("Voice transcription failed entirely: %s", exc)
-            raise HTTPException(
-                status_code=503,
-                detail=(
-                    "Voice transcription is temporarily unavailable. Please type "
-                    "your report instead - it works exactly the same."
-                ),
-            )
-
-    transcript = (transcript or "").strip()
-    if not transcript:
-        raise HTTPException(
-            status_code=422,
-            detail="We couldn't hear anything in that recording. Please try again a bit closer to the microphone.",
-        )
-
-    return {
-        "transcript": transcript,
-        "provider": provider_used,
-        "language": language or None,
-    }
+async def transcribe_voice():
+    """Disabled: voice reports arrive via WhatsApp voice notes only."""
+    raise HTTPException(
+        status_code=410,
+        detail="Web voice reporting is disabled. Please send a voice note via WhatsApp instead.",
+    )
