@@ -15,34 +15,25 @@ services:
         value: /opt/render/project/src/backend/data/media
       - key: MESSAGE_CHANNEL
         value: whatsapp
+      # Fill after deploy (empty also works — *.onrender.com is allowed).
       - key: FRONTEND_URL
         sync: false
+      # --- Required: copy from your local backend/.env ---
       - key: WHATSAPP_ACCESS_TOKEN
         sync: false
       - key: WHATSAPP_PHONE_ID
         sync: false
       - key: WHATSAPP_VERIFY_TOKEN
         sync: false
-      - key: WHATSAPP_APP_SECRET
-        sync: false
-      - key: WHATSAPP_API_VERSION
-        value: v25.0
-      - key: VISION_PROVIDER
-        value: openrouter
       - key: OPENROUTER_API_KEY
         sync: false
-      - key: VISION_MODEL
-        value: nex-agi/nex-n2.5-pro:free
-      - key: TEXT_MODEL
-        value: nvidia/nemotron-3-super-120b-a12b:free
-      - key: NVIDIA_API_KEY
-        sync: false
-      - key: SPEECH_PROVIDER
-        value: elevenlabs
       - key: ELEVENLABS_API_KEY
         sync: false
-      - key: ELEVENLABS_VOICE_ID
-        value: 21m00Tcm4TlvDq8ikWAM
+      # --- Optional (leave empty if unused) ---
+      - key: WHATSAPP_APP_SECRET
+        sync: false
+      - key: NVIDIA_API_KEY
+        sync: false
       - key: COMMUNITY_HEAD_PHONE
         sync: false
     disk:

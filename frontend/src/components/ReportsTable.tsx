@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { WasteReport, STATUS_LABELS, PRIORITY_LABELS, WASTE_TYPE_LABELS, WASTE_TYPE_ICONS } from '../types';
+import { mediaUrl } from '../services/api';
 import { MapPin, Clock, ChevronUp, ChevronDown, Inbox, ImageIcon } from 'lucide-react';
 
 interface ReportsTableProps {
@@ -134,7 +135,7 @@ export function ReportsTable({ reports, onSelectReport, selectedReportId }: Repo
                 <td className="px-4 py-3">
                   {report.image_url ? (
                     <img
-                      src={report.image_url}
+                      src={mediaUrl(report.image_url)}
                       alt=""
                       loading="lazy"
                       className="w-12 h-12 rounded-md object-cover border border-earth-200"

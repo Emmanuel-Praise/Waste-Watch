@@ -32,7 +32,7 @@ class Settings:
     message_channel: str = _env("MESSAGE_CHANNEL", "log")
 
     # Vision provider: "mock" or "openrouter". Falls back to NVIDIA then mock.
-    vision_provider: str = _env("VISION_PROVIDER", "mock")
+    vision_provider: str = _env("VISION_PROVIDER", "openrouter")
     openrouter_api_key: str = _env("OPENROUTER_API_KEY")
     vision_model: str = _env("VISION_MODEL", "nex-agi/nex-n2.5-pro:free")
     text_model: str = _env("TEXT_MODEL", "nvidia/nemotron-3-super-120b-a12b:free")
@@ -43,7 +43,7 @@ class Settings:
     nvidia_text_model: str = _env("NVIDIA_TEXT_MODEL", "meta/llama-3.2-11b-vision-instruct")
 
     # Speech provider: "mock" or "groq"
-    speech_provider: str = _env("SPEECH_PROVIDER", "mock")
+    speech_provider: str = _env("SPEECH_PROVIDER", "elevenlabs")
     groq_api_key: str = _env("GROQ_API_KEY")
     speech_model: str = _env("SPEECH_MODEL", "whisper-large-v3")
 

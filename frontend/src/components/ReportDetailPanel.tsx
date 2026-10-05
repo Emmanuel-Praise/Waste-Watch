@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { WasteReport, Team, STATUS_LABELS, PRIORITY_LABELS, WASTE_TYPE_LABELS, HAZARD_LABELS, SIZE_LABELS, STATUS_ORDER, Status } from '../types';
+import { mediaUrl } from '../services/api';
 import { X, MapPin, Clock, ArrowRight, Sparkles, ShieldAlert, Users } from 'lucide-react';
 
 interface ReportDetailPanelProps {
@@ -210,7 +211,7 @@ export function ReportDetailPanel({
             <label className="text-xs font-medium text-gray-500 uppercase mb-2 block">Image</label>
             <div className="rounded-lg overflow-hidden border border-gray-200">
               <img 
-                src={report.image_url} 
+                src={mediaUrl(report.image_url)} 
                 alt="Waste report"
                 className="w-full h-48 object-cover"
               />

@@ -17,6 +17,17 @@ import {
 const _API_ROOT = ((import.meta as unknown as { env?: Record<string, string | undefined> }).env?.VITE_API_URL ?? '').replace(/\/$/, '');
 const API_BASE = `${_API_ROOT}/api`;
 
+/** Backend origin ('' for local dev proxy). Used to resolve /media image URLs when the API is remote. */
+export const API_ROOT = _API_ROOT;
+
+/** Resolve a backend file path (e.g. `/media/abc.jpg`) against the API origin. Absolute URLs pass through. */
+export function mediaUrl(url: string | null | undefined): string {
+  if (!url) return '';
+  if (/^https?:\/\//i.test(url)) return url;
+  if (!API_ROOT) return url;
+  return `${API_ROOT}${url.startsWith('/') ? '' : '/'}${url}`;
+}
+
 async function handleResponse<T>(response: Response, fallback: string): Promise<T> {
   if (!response.ok) {
     let message = fallback;
