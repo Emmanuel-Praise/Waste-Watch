@@ -7,7 +7,7 @@ import { ReportsTable } from '../components/ReportsTable';
 import { ReportDetailPanel } from '../components/ReportDetailPanel';
 import { MarketPanel } from '../components/MarketPanel';
 import { PartnersPanel } from '../components/PartnersPanel';
-import { WasteReport, DashboardStats, Team, Status } from '../types';
+import { WasteReport, DashboardStats, Team, Status, AppUser } from '../types';
 import * as api from '../services/api';
 import { FileText, CheckCircle, Users, Clock, AlertCircle, Store } from 'lucide-react';
 
@@ -19,7 +19,8 @@ const VIEW_TITLES: Record<SidebarView, string> = {
   partners: 'Vendors & Collectors',
 };
 
-export function AdminDashboard() {
+export function AdminDashboard({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
+  const isAdmin = user.role === 'admin';
   const [view, setView] = useState<SidebarView>('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [live, setLive] = useState(false);
@@ -161,6 +162,9 @@ export function AdminDashboard() {
         live={live}
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        userName={user.name}
+        userRole={user.role}
+        onLogout={onLogout}
       />
 
       <div className="flex-1 flex flex-col min-w-0">
@@ -253,9 +257,11 @@ export function AdminDashboard() {
               <div className="mb-4 flex items-center gap-2">
                 <Store className="h-5 w-5 text-forest-600" />
                 <div>
-                  <h2 className="text-lg font-semibold text-ink">Waste Marketplace</h2>
+                  <h2 className="text-lg font-semibold text-ink">Vendors & Collectors</h2>
                   <p className="text-sm text-ink-mute">
-                    Vendor reservations, collection jobs and the money split — all in one place.
+                    {isAdmin
+                      ? 'Review WhatsApp signups: approve new vendors, suspend accounts when needed.'
+                      : 'The business network: buyers of sorted materials and citizens earning from collection work.'}
                   </p>
                 </div>
               </div>
@@ -271,7 +277,7 @@ export function AdminDashboard() {
                   The business network: buyers of sorted materials and citizens earning from collection work.
                 </p>
               </div>
-              <PartnersPanel />
+              <PartnersPanel isAdmin={isAdmin} />
             </div>
           )}
         </main>

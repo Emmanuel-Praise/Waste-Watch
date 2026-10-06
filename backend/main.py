@@ -7,14 +7,15 @@ import logging
 from contextlib import asynccontextmanager
 from datetime import datetime
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from config import MEDIA_DIR
 from database import init_db
-from routers import ai, dashboard, market, partners, reports, voice, whatsapp
+from routers import ai, auth, dashboard, market, partners, reports, voice, whatsapp
 from seed import seed_if_empty
+from services.auth import require_user
 
 logging.basicConfig(level=logging.INFO)
 
@@ -51,14 +52,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(ai.router, prefix="/api/ai", tags=["ai"])
-app.include_router(reports.router, prefix="/api/reports", tags=["reports"])
+# Include routers.
+# Dashboard APIs require a staff login (see /api/auth/login). The WhatsApp
+# webhook, its public status, health checks and /media stay public so
+# citizens and the Meta callbacks keep working without a login.
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+app.include_router(ai.router, prefix="/api/ai", tags=["ai"], dependencies=[Depends(require_user)])
+app.include_router(reports.router, prefix="/api/reports", tags=["reports"], dependencies=[Depends(require_user)])
 app.include_router(whatsapp.router, prefix="/api/whatsapp", tags=["whatsapp"])
-app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"])
-app.include_router(market.router, prefix="/api/market", tags=["market"])
-app.include_router(partners.router, prefix="/api/partners", tags=["partners"])
-app.include_router(voice.router, prefix="/api/voice", tags=["voice"])
+app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"], dependencies=[Depends(require_user)])
+app.include_router(market.router, prefix="/api/market", tags=["market"], dependencies=[Depends(require_user)])
+app.include_router(partners.router, prefix="/api/partners", tags=["partners"], dependencies=[Depends(require_user)])
+app.include_router(voice.router, prefix="/api/voice", tags=["voice"], dependencies=[Depends(require_user)])
 
 # Serve incoming WhatsApp images so the dashboard can display them
 MEDIA_DIR.mkdir(parents=True, exist_ok=True)

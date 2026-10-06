@@ -39,6 +39,7 @@ Base = declarative_base()
 # an existing table). New columns are added here as the schema evolves.
 _SQLITE_COLUMN_MIGRATIONS = [
     ("pending_intakes", "state", "VARCHAR(30) DEFAULT 'idle'"),
+    ("users", "password_hash", "VARCHAR(255)"),
 ]
 
 
@@ -55,6 +56,7 @@ def _migrate_sqlite():
 
 def init_db():
     from models import (  # noqa: F401
+        AuthToken,
         BrandNotified,
         CitizenMessage,
         Hotspot,

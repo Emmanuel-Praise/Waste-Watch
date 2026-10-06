@@ -16,7 +16,8 @@ from sqlalchemy.orm import Session
 
 from config import MEDIA_DIR
 from database import get_db
-from models import Claim, Collector, Vendor, WASTE_TYPES
+from models import Claim, Collector, User, Vendor, WASTE_TYPES
+from services.auth import require_admin
 from services.whatsapp import digits_of
 
 router = APIRouter()
@@ -180,6 +181,33 @@ def vendor_claims(vendor_id: str, db: Session = Depends(get_db)):
     return [_claim_summary(c) for c in claims]
 
 
+class StatusUpdate(BaseModel):
+    status: str
+
+
+_VALID_PARTNER_STATUSES = ("pending", "active", "suspended")
+
+
+@router.patch("/vendors/{vendor_id}/status", response_model=VendorOut)
+def set_vendor_status(
+    vendor_id: str,
+    payload: StatusUpdate,
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    """Approve or suspend a vendor. Admin only - vendors start as pending."""
+    vendor = db.get(Vendor, vendor_id)
+    if not vendor:
+        raise HTTPException(status_code=404, detail="Vendor not found")
+    status = (payload.status or "").strip().lower()
+    if status not in _VALID_PARTNER_STATUSES:
+        raise HTTPException(status_code=400, detail="Status must be pending, active or suspended")
+    vendor.status = status
+    db.commit()
+    db.refresh(vendor)
+    return _vendor_out(vendor)
+
+
 # --------------------------------------------------------------------------- #
 # Collectors
 # --------------------------------------------------------------------------- #
@@ -216,3 +244,23 @@ def collector_jobs(collector_id: str, db: Session = Depends(get_db)):
         .all()
     )
     return [_claim_summary(c) for c in claims]
+
+
+@router.patch("/collectors/{collector_id}/status", response_model=CollectorOut)
+def set_collector_status(
+    collector_id: str,
+    payload: StatusUpdate,
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    """Suspend or re-activate a collector. Admin only."""
+    collector = db.get(Collector, collector_id)
+    if not collector:
+        raise HTTPException(status_code=404, detail="Collector not found")
+    status = (payload.status or "").strip().lower()
+    if status not in _VALID_PARTNER_STATUSES:
+        raise HTTPException(status_code=400, detail="Status must be pending, active or suspended")
+    collector.status = status
+    db.commit()
+    db.refresh(collector)
+    return _collector_out(collector)

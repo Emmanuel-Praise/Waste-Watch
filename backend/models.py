@@ -37,7 +37,24 @@ class User(Base):
     email = Column(String(255), nullable=False)
     role = Column(String(20), nullable=False, default="operator")
     phone = Column(String(30), nullable=True)
+    # PBKDF2 password hash for dashboard login (NULL = login disabled,
+    # e.g. auto-created WhatsApp citizens who never log in).
+    password_hash = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class AuthToken(Base):
+    """Dashboard login sessions. Tokens are random, expire after 30 days,
+    and are revoked on logout."""
+
+    __tablename__ = "auth_tokens"
+
+    token = Column(String(64), primary_key=True)
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", lazy="joined")
 
 
 class Team(Base):
@@ -303,7 +320,7 @@ class ProcessedMessage(Base):
 WASTE_TYPES = ["plastic", "organic", "mixed", "hazardous", "medical"]
 PRIORITIES = ["low", "medium", "high", "critical"]
 STATUSES = ["pending", "verified", "assigned", "cleared"]
-ROLES = ["admin", "operator", "team", "citizen"]
+ROLES = ["admin", "council", "operator", "team", "citizen"]
 HAZARD_LEVELS = ["low", "medium", "high", "critical"]
 SIZES = ["small", "medium", "large"]
 

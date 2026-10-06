@@ -233,3 +233,19 @@ export const CLAIM_STATUS_LABELS: Record<ClaimStatus, string> = {
 };
 
 export const CLAIM_FLOW: ClaimStatus[] = ['reserved', 'collecting', 'collected', 'delivered', 'paid'];
+
+// ---------------------------------------------------------------------------
+// Staff auth (dashboard login: admin + council)
+// ---------------------------------------------------------------------------
+
+export interface AppUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: AppUser;
+}

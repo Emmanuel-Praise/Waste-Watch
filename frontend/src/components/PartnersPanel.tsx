@@ -1,12 +1,19 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Store, HandCoins, Phone, MapPin, IdCard, Loader2, RefreshCw } from 'lucide-react';
+import { Store, HandCoins, Phone, MapPin, IdCard, Loader2, RefreshCw, Check, Ban } from 'lucide-react';
 import * as api from '../services/api';
 import { Collector, Vendor } from '../types';
 
-export function PartnersPanel() {
+const statusBadge: Record<string, string> = {
+  active: 'bg-forest-100 text-forest-800',
+  pending: 'bg-amber-100 text-amber-800',
+  suspended: 'bg-red-100 text-red-700',
+};
+
+export function PartnersPanel({ isAdmin }: { isAdmin: boolean }) {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [collectors, setCollectors] = useState<Collector[]>([]);
   const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -23,6 +30,66 @@ export function PartnersPanel() {
     const timer = window.setInterval(load, 30000);
     return () => window.clearInterval(timer);
   }, [load]);
+
+  const setStatus = async (
+    kind: 'vendor' | 'collector',
+    id: string,
+    status: string
+  ) => {
+    setBusyId(id);
+    try {
+      if (kind === 'vendor') await api.setVendorStatus(id, status);
+      else await api.setCollectorStatus(id, status);
+      await load();
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : 'Update failed');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const actionButton = (
+    kind: 'vendor' | 'collector',
+    id: string,
+    status: string
+  ) => {
+    if (!isAdmin) return null;
+    const busy = busyId === id;
+    if (status === 'pending') {
+      return (
+        <button
+          onClick={() => setStatus(kind, id, 'active')}
+          disabled={busy}
+          className="inline-flex items-center gap-1 rounded-lg bg-forest-600 px-2.5 py-1.5 text-[11px] font-semibold text-white transition hover:bg-forest-700 disabled:opacity-50"
+        >
+          {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+          Approve
+        </button>
+      );
+    }
+    if (status === 'active') {
+      return (
+        <button
+          onClick={() => setStatus(kind, id, 'suspended')}
+          disabled={busy}
+          className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1.5 text-[11px] font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-50"
+        >
+          {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Ban className="h-3 w-3" />}
+          Suspend
+        </button>
+      );
+    }
+    return (
+      <button
+        onClick={() => setStatus(kind, id, 'active')}
+        disabled={busy}
+        className="inline-flex items-center gap-1 rounded-lg border border-earth-200 px-2.5 py-1.5 text-[11px] font-semibold text-ink-soft transition hover:border-forest-400 hover:text-forest-700 disabled:opacity-50"
+      >
+        {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+        Reactivate
+      </button>
+    );
+  };
 
   if (loading) {
     return (
@@ -56,14 +123,15 @@ export function PartnersPanel() {
           <div className="divide-y divide-earth-50">
             {vendors.map((vendor) => (
               <div key={vendor.id} className="px-5 py-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-semibold text-ink">{vendor.business_name}</p>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                      vendor.status === 'active' ? 'bg-forest-100 text-forest-800' : 'bg-red-100 text-red-700'
-                    }`}
-                  >
-                    {vendor.status}
+                  <span className="flex items-center gap-2">
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ${statusBadge[vendor.status] ?? statusBadge.suspended}`}
+                    >
+                      {vendor.status}
+                    </span>
+                    {actionButton('vendor', vendor.id, vendor.status)}
                   </span>
                 </div>
                 <p className="mt-0.5 text-xs text-ink-mute">Owner: {vendor.owner_name}</p>
@@ -125,14 +193,15 @@ export function PartnersPanel() {
           <div className="divide-y divide-earth-50">
             {collectors.map((collector) => (
               <div key={collector.id} className="px-5 py-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-semibold text-ink">{collector.full_name}</p>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                      collector.status === 'active' ? 'bg-forest-100 text-forest-800' : 'bg-red-100 text-red-700'
-                    }`}
-                  >
-                    {collector.status}
+                  <span className="flex items-center gap-2">
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ${statusBadge[collector.status] ?? statusBadge.suspended}`}
+                    >
+                      {collector.status}
+                    </span>
+                    {actionButton('collector', collector.id, collector.status)}
                   </span>
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-mute">

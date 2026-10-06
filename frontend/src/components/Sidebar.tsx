@@ -1,4 +1,4 @@
-import { LayoutDashboard, FileText, MapPin, Store, Users, Trash2, X } from 'lucide-react';
+import { LayoutDashboard, FileText, MapPin, Store, Users, Trash2, X, LogOut } from 'lucide-react';
 
 export type SidebarView = 'overview' | 'reports' | 'map' | 'market' | 'partners';
 
@@ -8,6 +8,9 @@ interface SidebarProps {
   live?: boolean;
   open: boolean;
   onClose: () => void;
+  userName?: string;
+  userRole?: string;
+  onLogout?: () => void;
 }
 
 const NAV: { id: SidebarView; label: string; icon: typeof LayoutDashboard; group: string }[] = [
@@ -18,7 +21,7 @@ const NAV: { id: SidebarView; label: string; icon: typeof LayoutDashboard; group
   { id: 'partners', label: 'Vendors & Collectors', icon: Users, group: 'Business' },
 ];
 
-export function Sidebar({ active, onNavigate, live = false, open, onClose }: SidebarProps) {
+export function Sidebar({ active, onNavigate, live = false, open, onClose, userName, userRole, onLogout }: SidebarProps) {
   let lastGroup = '';
 
   return (
@@ -90,12 +93,21 @@ export function Sidebar({ active, onNavigate, live = false, open, onClose }: Sid
           </div>
           <div className="flex items-center gap-3 bg-earth-50 rounded-lg p-3">
             <div className="w-9 h-9 bg-forest-600 text-white rounded-full flex items-center justify-center text-sm font-medium shrink-0">
-              A
+              {(userName?.[0] ?? 'A').toUpperCase()}
             </div>
-            <div className="min-w-0">
-              <p className="text-sm font-medium truncate">Council Admin</p>
-              <p className="text-xs text-ink-mute">Operations</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium truncate">{userName ?? 'Council Admin'}</p>
+              <p className="text-xs text-ink-mute capitalize">{userRole ?? 'Operations'}</p>
             </div>
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                title="Log out"
+                className="shrink-0 rounded-lg p-2 text-ink-mute transition hover:bg-earth-100 hover:text-ink"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       </aside>

@@ -736,10 +736,20 @@ def _find_listing_by_ticket(db: Session, ticket: str) -> Optional[Listing]:
 
 def _handle_vendor_signup(db: Session, citizen: User, text: str) -> str:
     existing = _find_vendor_by_phone(db, citizen.phone)
-    if existing:
+    if existing and (existing.status or "") == "active":
         return (
             f"✅ You are already registered as vendor *{existing.business_name}* "
             f"({', '.join(existing.waste_types or [])}). Reply *market* to see stock."
+        )
+    if existing and (existing.status or "") == "pending":
+        return (
+            f"⏳ Your vendor application for *{existing.business_name}* is still "
+            "under review by the council. We will notify you here once approved."
+        )
+    if existing and (existing.status or "") == "suspended":
+        return (
+            "⛔ This vendor account is suspended. Please contact the council "
+            "to resolve it."
         )
     parts = _pipe_parts(text)
     if len(parts) < 2 or not parts[0] or not parts[1]:
@@ -762,14 +772,14 @@ def _handle_vendor_signup(db: Session, citizen: User, text: str) -> str:
         phone=citizen.phone,
         waste_types=waste_types,
         zone=zone or None,
-        status="active",
+        status="pending",
     )
     db.add(vendor)
     db.commit()
     return (
-        f"✅ Welcome, *{business}*! You will get WhatsApp alerts for "
-        f"*{' / '.join(waste_types)}* waste. Reply *market* to see current stock, "
-        f"then *reserve WST-001 20* to reserve quantity."
+        f"✅ Application received, *{business}*! The council will review and "
+        f"approve it shortly. Once approved you will get WhatsApp alerts for "
+        f"*{' / '.join(waste_types)}* waste and can reserve with *reserve WST-001 20*."
     )
 
 
@@ -850,6 +860,13 @@ def _handle_reserve(db: Session, citizen: User, text: str) -> str:
             "You need a vendor account first. Join with:\n"
             "*sell Business | Owner | Zone | plastic,organic*"
         )
+    if (vendor.status or "") == "pending":
+        return (
+            "⏳ Your vendor application is still under review by the council. "
+            "You can reserve stock once approved — we will notify you here."
+        )
+    if (vendor.status or "") != "active":
+        return "⛔ This vendor account is suspended. Please contact the council."
     listing = _find_listing_by_ticket(db, ticket)
     if not listing:
         return f"Could not find listing *{ticket}*. Reply *market* for live tickets."
@@ -903,6 +920,8 @@ def _handle_take_job(db: Session, citizen: User, text: str) -> str:
         return (
             "You need a collector account first. Join with:\n*earn Full Name | Zone*"
         )
+    if (collector.status or "") != "active":
+        return "⛔ This collector account is suspended. Please contact the council."
     listing = _find_listing_by_ticket(db, ticket)
     if not listing:
         return f"Could not find listing *{ticket}*. Reply *jobs* for open jobs."
