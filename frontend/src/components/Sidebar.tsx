@@ -28,21 +28,21 @@ export function Sidebar({ active, onNavigate, live = false, open, onClose }: Sid
         onClick={onClose}
       />
       <aside
-        className={`fixed md:sticky top-0 z-50 md:z-auto h-screen w-64 shrink-0 flex-col bg-ink text-white ${
+        className={`fixed md:sticky top-0 z-50 md:z-auto h-screen w-64 shrink-0 flex-col border-r border-earth-200 bg-white text-ink ${
           open ? 'flex' : 'hidden'
         } md:flex`}
       >
         <div className="p-5 flex items-center gap-3">
-          <div className="p-2 bg-forest-500 rounded-lg shadow-lg">
+          <div className="p-2 bg-forest-600 text-white rounded-lg shadow-lg">
             <Trash2 className="w-6 h-6" />
           </div>
           <div className="min-w-0">
             <h1 className="text-lg font-semibold leading-tight truncate">Waste Watch</h1>
-            <p className="text-[11px] text-white/50">Bamenda Municipality</p>
+            <p className="text-[11px] text-ink-mute">Bamenda Municipality</p>
           </div>
           <button
             onClick={onClose}
-            className="ml-auto md:hidden p-1 rounded-lg hover:bg-white/10"
+            className="ml-auto md:hidden p-1 rounded-lg hover:bg-earth-100"
             aria-label="Close menu"
           >
             <X className="w-5 h-5" />
@@ -58,7 +58,7 @@ export function Sidebar({ active, onNavigate, live = false, open, onClose }: Sid
             return (
               <div key={item.id}>
                 {showGroup && (
-                  <p className="px-3 pt-4 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-white/35">
+                  <p className="px-3 pt-4 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-ink-faint">
                     {item.group}
                   </p>
                 )}
@@ -69,8 +69,8 @@ export function Sidebar({ active, onNavigate, live = false, open, onClose }: Sid
                   }}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                     isActive
-                      ? 'bg-forest-600/90 text-white shadow-sm'
-                      : 'text-white/65 hover:bg-white/5 hover:text-white'
+                      ? 'bg-forest-600 text-white shadow-sm'
+                      : 'text-ink-soft hover:bg-earth-50 hover:text-ink'
                   }`}
                 >
                   <Icon className="w-5 h-5" />
@@ -81,20 +81,20 @@ export function Sidebar({ active, onNavigate, live = false, open, onClose }: Sid
           })}
         </nav>
 
-        <div className="p-4 border-t border-white/10">
+        <div className="p-4 border-t border-earth-200">
           <div className="flex items-center gap-2 px-1 mb-3">
-            <span className={`w-2 h-2 rounded-full ${live ? 'bg-forest-400' : 'bg-white/30'}`} />
-            <span className="text-xs text-white/60">
+            <span className={`w-2 h-2 rounded-full ${live ? 'bg-forest-500' : 'bg-earth-300'}`} />
+            <span className="text-xs text-ink-mute">
               {live ? 'WhatsApp connected' : 'WhatsApp not connected'}
             </span>
           </div>
-          <div className="flex items-center gap-3 bg-white/5 rounded-lg p-3">
-            <div className="w-9 h-9 bg-forest-600 rounded-full flex items-center justify-center text-sm font-medium shrink-0">
+          <div className="flex items-center gap-3 bg-earth-50 rounded-lg p-3">
+            <div className="w-9 h-9 bg-forest-600 text-white rounded-full flex items-center justify-center text-sm font-medium shrink-0">
               A
             </div>
             <div className="min-w-0">
               <p className="text-sm font-medium truncate">Council Admin</p>
-              <p className="text-xs text-white/50">Operations</p>
+              <p className="text-xs text-ink-mute">Operations</p>
             </div>
           </div>
         </div>

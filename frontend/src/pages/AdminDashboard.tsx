@@ -190,26 +190,25 @@ export function AdminDashboard() {
                 <StatCard title="Cleared" value={stats?.cleared || 0} icon={CheckCircle} color="bg-forest-500" />
               </div>
 
-              <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 flex-1">
-                <div className="flex-1 lg:w-3/5 h-[380px] lg:h-auto">
-                  <WasteMap
+              <div className="flex flex-col">
+                <div className="mb-3 flex items-end justify-between gap-3">
+                  <div>
+                    <h2 className="text-lg font-semibold text-ink">Recent Reports</h2>
+                    <p className="text-sm text-ink-mute">{reports.length} reports</p>
+                  </div>
+                  <button
+                    onClick={() => setView('map')}
+                    className="shrink-0 rounded-lg border border-earth-200 bg-white px-3.5 py-2 text-xs font-semibold text-forest-700 transition hover:border-forest-400 hover:bg-forest-50"
+                  >
+                    Open Waste Map
+                  </button>
+                </div>
+                <div className="flex-1">
+                  <ReportsTable
                     reports={reports}
                     onSelectReport={handleSelectReport}
                     selectedReportId={selectedReport?.id}
                   />
-                </div>
-                <div className="lg:w-2/5 flex flex-col">
-                  <div className="mb-3">
-                    <h2 className="text-lg font-semibold text-ink">Recent Reports</h2>
-                    <p className="text-sm text-ink-mute">{reports.length} reports</p>
-                  </div>
-                  <div className="flex-1">
-                    <ReportsTable
-                      reports={reports}
-                      onSelectReport={handleSelectReport}
-                      selectedReportId={selectedReport?.id}
-                    />
-                  </div>
                 </div>
               </div>
             </>
