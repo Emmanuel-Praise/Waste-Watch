@@ -80,5 +80,23 @@ class Settings:
     # even when SPEECH_PROVIDER points elsewhere.
     voice_prefer_elevenlabs: bool = _env("VOICE_PREFER_ELEVENLABS", "true").lower() in ("1", "true", "yes")
 
+    # ---- Meterless local model proxy (optional, best-effort) ----
+    # Local OpenAI-compatible proxy. First choice for citizen text replies;
+    # when it is off or unreachable the chain falls back to OpenRouter/NVIDIA.
+    # The bearer token is re-read from METERLESS_TOKEN_PATH on every call.
+    meterless_enabled: bool = _env("METERLESS_ENABLED", "true").lower() in ("1", "true", "yes")
+    meterless_base_url: str = _env("METERLESS_BASE_URL", "http://127.0.0.1:8088")
+    meterless_model: str = _env("METERLESS_MODEL", "worker")
+    # Empty means %LOCALAPPDATA%\ai.meterless.runtime\proxy-token on Windows.
+    meterless_token_path: str = _env("METERLESS_TOKEN_PATH")
+    meterless_timeout_seconds: int = int(_env("METERLESS_TIMEOUT_SECONDS", "60"))
+
+    # ---- Zetaris Analytics Gateway ----
+    zetaris_base_url: str = _env("ZETARIS_BASE_URL", "http://127.0.0.1:3000")
+    zetaris_email: str = _env("ZETARIS_EMAIL", "admin@zetaris.com")
+    zetaris_password: str = _env("ZETARIS_PASSWORD")
+    zetaris_database: str = _env("ZETARIS_DATABASE", "WASTE_WATCH")
+    zetaris_timeout_seconds: int = int(_env("ZETARIS_TIMEOUT_SECONDS", "30"))
+    zetaris_corroboration_days: int = int(_env("ZETARIS_CORROBORATION_DAYS", "7"))
 
 settings = Settings()

@@ -22,6 +22,14 @@ venv/
 *.sqlite3
 backend/media/
 
+# ---- Local run / test artifacts ----
+*.log
+*.pid
+/zlogin.json
+/zorg.txt
+/zresp.json
+/ztok.txt
+
 # ---- Editor / OS ----
 .vscode/
 .idea/

@@ -3,8 +3,9 @@ Free-form LLM text generation for composing natural citizen replies.
 
 Uses the same free-tier providers as vision analysis but WITHOUT the strict
 JSON vision contract, so the model can write a real, contextual reply that
-reads the citizen's words. Falls back through OpenRouter -> NVIDIA and returns
-an empty string on total failure (callers keep a template as last resort).
+reads the citizen's words. Falls back through Meterless -> OpenRouter ->
+NVIDIA and returns an empty string on total failure (callers keep a template
+as last resort).
 """
 
 import logging
@@ -13,6 +14,7 @@ import time
 import requests
 
 from config import settings
+from services import meterless
 
 logger = logging.getLogger(__name__)
 
@@ -44,11 +46,26 @@ _DEFAULT_SYSTEM = (
 
 
 def _text_chain():
-    """Yield (api_key, base_url, model) for each configured text provider."""
+    """Yield (api_key, base_url, model, timeout, extra_body) per provider.
+
+    Meterless comes first when its local proxy token is present; the token is
+    read fresh on every reply so a rotated token needs no restart. Its
+    extra_body turns off think-aloud replies so they pass the reasoning check
+    below.
+    """
+    token = meterless.read_token()
+    if settings.meterless_enabled and token:
+        yield (
+            token,
+            meterless.api_base(),
+            settings.meterless_model,
+            float(settings.meterless_timeout_seconds),
+            meterless.EXTRA_BODY,
+        )
     if settings.openrouter_api_key:
-        yield settings.openrouter_api_key, "https://openrouter.ai/api/v1", settings.text_model
+        yield settings.openrouter_api_key, "https://openrouter.ai/api/v1", settings.text_model, 30.0, None
     if settings.nvidia_api_key:
-        yield settings.nvidia_api_key, "https://integrate.api.nvidia.com/v1", settings.nvidia_text_model
+        yield settings.nvidia_api_key, "https://integrate.api.nvidia.com/v1", settings.nvidia_text_model, 30.0, None
 
 
 _REASONING_STARTS = (
@@ -81,7 +98,7 @@ def generate_text(
     prompt = f"{context}\n\n{instructions}".strip()
     chain = list(_text_chain())
     calls_left = 3
-    for api_key, base_url, model in chain:
+    for api_key, base_url, model, timeout, extra_body in chain:
         for attempt in range(2):
             if calls_left <= 0:
                 return ""
@@ -93,6 +110,17 @@ def generate_text(
                     "right now, with no explanations, no reasoning and no preamble."
                 )
             t0 = time.time()
+            payload = {
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": message},
+                ],
+                "max_tokens": max_tokens,
+                "temperature": 0.7,
+            }
+            if extra_body:
+                payload.update(extra_body)
             try:
                 response = requests.post(
                     f"{base_url}/chat/completions",
@@ -100,16 +128,8 @@ def generate_text(
                         "Authorization": f"Bearer {api_key}",
                         "Content-Type": "application/json",
                     },
-                    json={
-                        "model": model,
-                        "messages": [
-                            {"role": "system", "content": system},
-                            {"role": "user", "content": message},
-                        ],
-                        "max_tokens": max_tokens,
-                        "temperature": 0.7,
-                    },
-                    timeout=30,
+                    json=payload,
+                    timeout=timeout,
                 )
                 if response.status_code == 429 and attempt == 0:
                     time.sleep(1)

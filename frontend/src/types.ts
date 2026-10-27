@@ -235,6 +235,41 @@ export const CLAIM_STATUS_LABELS: Record<ClaimStatus, string> = {
 export const CLAIM_FLOW: ClaimStatus[] = ['reserved', 'collecting', 'collected', 'delivered', 'paid'];
 
 // ---------------------------------------------------------------------------
+// Zetaris Analytics Gateway types
+// ---------------------------------------------------------------------------
+
+export type InsightType = 'summary' | 'breakdowns' | 'top_areas';
+
+export interface InsightSource {
+  engine: string;
+  database: string;
+}
+
+/** One SQL statement behind the insights view, as returned by the backend. */
+export interface InsightQueryLog {
+  name: string;
+  sql: string;
+  rows: number;
+  time_used: number;
+  ok: boolean;
+  error?: string;
+}
+
+export interface Insights {
+  total: number;
+  by_status: Record<string, number>;
+  by_priority: Record<string, number>;
+  by_waste_type: Record<string, number>;
+  top_areas: Array<{ area: string; count: number }>;
+  recent_24h: number;
+  critical_high: number;
+  source: InsightSource;
+  queries: InsightQueryLog[];
+  generated_at: string;
+  cached: boolean;
+}
+
+// ---------------------------------------------------------------------------
 // Staff auth (dashboard login: admin + council)
 // ---------------------------------------------------------------------------
 

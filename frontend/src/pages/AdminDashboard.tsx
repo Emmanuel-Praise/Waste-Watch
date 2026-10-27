@@ -1,27 +1,29 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Header } from '../components/Header';
-import { Sidebar, SidebarView } from '../components/Sidebar';
+import { Sidebar } from '../components/Sidebar';
 import { StatCard } from '../components/StatCard';
 import { WasteMap } from '../components/WasteMap';
 import { ReportsTable } from '../components/ReportsTable';
 import { ReportDetailPanel } from '../components/ReportDetailPanel';
 import { MarketPanel } from '../components/MarketPanel';
 import { PartnersPanel } from '../components/PartnersPanel';
+import { InsightsPanel } from '../components/InsightsPanel';
 import { WasteReport, DashboardStats, Team, Status, AppUser } from '../types';
 import * as api from '../services/api';
 import { FileText, CheckCircle, Users, Clock, AlertCircle, Store } from 'lucide-react';
 
-const VIEW_TITLES: Record<SidebarView, string> = {
+const VIEW_TITLES: Record<string, string> = {
   overview: 'Operations Overview',
   reports: 'All Reports',
   map: 'Waste Map',
   market: 'Waste Marketplace',
   partners: 'Vendors & Collectors',
+  insights: 'Zetaris Insights',
 };
 
 export function AdminDashboard({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
   const isAdmin = user.role === 'admin';
-  const [view, setView] = useState<SidebarView>('overview');
+  const [view, setView] = useState<string>('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [live, setLive] = useState(false);
   const [reports, setReports] = useState<WasteReport[]>([]);
@@ -278,6 +280,18 @@ export function AdminDashboard({ user, onLogout }: { user: AppUser; onLogout: ()
                 </p>
               </div>
               <PartnersPanel isAdmin={isAdmin} />
+            </div>
+          )}
+
+          {view === 'insights' && (
+            <div className="flex flex-col">
+              <div className="mb-4">
+                <h2 className="text-lg font-semibold text-ink">Zetaris Insights</h2>
+                <p className="text-sm text-ink-mute">
+                  Live read-only analytics queried through Zetaris against the app database.
+                </p>
+              </div>
+              <InsightsPanel />
             </div>
           )}
         </main>

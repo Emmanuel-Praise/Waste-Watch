@@ -23,16 +23,25 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #f5f0e8;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: #c4a679;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a1a1a1;
+  background: #b8956e;
+}
+
+/* Zetaris dashboard brand colors */
+:root {
+  --zetaris-green: #4A90E2;
+  --zetaris-light-green: #A8D5FF;
+  --zetaris-brown: #8B5A2B;
+  --zetaris-cream: #FAF9F5;
+  --zetaris-white: #FFFFFF;
 }
 
 /* Leaflet customizations */

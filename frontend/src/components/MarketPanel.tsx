@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Loader2, RefreshCw, Scale, Wallet, MapPin, PackageCheck } from 'lucide-react';
+import { Loader2, RefreshCw, Scale, Wallet, MapPin, PackageCheck, Image as ImageIcon } from 'lucide-react';
 import * as api from '../services/api';
 import {
   Claim,
@@ -168,40 +168,86 @@ export function MarketPanel() {
         <div className="divide-y divide-earth-50">
           {listings.length === 0 && (
             <p className="px-5 py-8 text-center text-xs text-ink-mute">
-              No listings yet — plastic, organic and mixed reports create them automatically.
+              No marketplace listings are available right now. Eligible plastic, organic and mixed reports will appear here with their photo, collection location, report notes, available quantity, price and listing status.
             </p>
           )}
           {listings.map((listing) => {
-            const claimedPct = Math.round(((listing.quantity_kg - listing.available_kg) / listing.quantity_kg) * 100);
+            const claimedPct = listing.quantity_kg > 0
+              ? Math.round(((listing.quantity_kg - listing.available_kg) / listing.quantity_kg) * 100)
+              : 0;
+            const address = listing.report.location?.address || 'Location not provided';
+            const description = listing.report.description?.trim() || 'No report description was provided.';
             return (
               <div key={listing.id} className="px-5 py-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-ink">
-                      {WASTE_TYPE_ICONS[listing.waste_type]} {Math.round(listing.available_kg)} kg available
-                    </span>
-                    <span className="text-xs text-ink-mute">of {Math.round(listing.quantity_kg)} kg</span>
-                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${listingStatusBadge[listing.status]}`}>
-                      {listing.status.replace('_', ' ')}
-                    </span>
+                <div className="flex flex-col gap-4 sm:flex-row">
+                  <div className="flex h-24 w-full shrink-0 items-center justify-center overflow-hidden rounded-lg bg-earth-50 sm:w-32">
+                    {listing.report.image_url ? (
+                      <img
+                        src={api.mediaUrl(listing.report.image_url)}
+                        alt={`${WASTE_TYPE_LABELS[listing.waste_type]} report near ${address}`}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center gap-1 text-ink-faint">
+                        <ImageIcon className="h-5 w-5" />
+                        <span className="text-[10px]">No report photo</span>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex items-center gap-3 text-xs">
-                    <span className="inline-flex items-center gap-1 text-ink-mute">
-                      <Scale className="h-3 w-3" />
-                      {listing.price_per_kg} FCFA/kg
-                    </span>
-                    <span className="font-medium text-earth-700">{listing.report.ticket_id}</span>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-ink">
+                          {WASTE_TYPE_ICONS[listing.waste_type]} {WASTE_TYPE_LABELS[listing.waste_type]} waste
+                        </p>
+                        <p className="mt-1 flex items-center gap-1 text-xs text-ink-mute">
+                          <MapPin className="h-3 w-3 shrink-0" />
+                          <span className="truncate">{address}</span>
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${listingStatusBadge[listing.status]}`}>
+                          {listing.status.replace('_', ' ')}
+                        </span>
+                        <span className="text-xs font-medium text-earth-700">{listing.report.ticket_id}</span>
+                      </div>
+                    </div>
+
+                    <p
+                      className="mt-2 text-xs leading-relaxed text-ink-soft"
+                      title={description}
+                      style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
+                    >
+                      {description}
+                    </p>
+
+                    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+                      <span className="font-semibold text-ink">
+                        {Math.round(listing.available_kg)} kg available
+                        <span className="font-normal text-ink-mute"> of {Math.round(listing.quantity_kg)} kg</span>
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-ink-mute">
+                        <Scale className="h-3 w-3" />
+                        {listing.price_per_kg.toLocaleString()} FCFA/kg
+                      </span>
+                      <span className="text-ink-mute">
+                        Listed value: {money(listing.quantity_kg * listing.price_per_kg)}
+                      </span>
+                    </div>
+
+                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-earth-100">
+                      <div className="h-full rounded-full bg-forest-500" style={{ width: `${Math.max(3, 100 - claimedPct)}%` }} />
+                    </div>
+                    {listing.claims.length > 0 && (
+                      <p className="mt-1.5 text-[11px] text-ink-mute">
+                        {listing.claims.filter((c) => c.status !== 'cancelled').length} reservation(s)
+                        {' · '}community portion: {Math.round(listing.available_kg)} kg
+                      </p>
+                    )}
                   </div>
                 </div>
-                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-earth-100">
-                  <div className="h-full rounded-full bg-forest-500" style={{ width: `${Math.max(3, 100 - claimedPct)}%` }} />
-                </div>
-                {listing.claims.length > 0 && (
-                  <p className="mt-1.5 text-[11px] text-ink-mute">
-                    {listing.claims.filter((c) => c.status !== 'cancelled').length} reservation(s)
-                    {' · '}community portion: {Math.round(listing.available_kg)} kg
-                  </p>
-                )}
               </div>
             );
           })}

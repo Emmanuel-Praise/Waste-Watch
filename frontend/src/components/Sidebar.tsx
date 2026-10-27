@@ -1,10 +1,21 @@
-import { LayoutDashboard, FileText, MapPin, Store, Users, Trash2, X, LogOut } from 'lucide-react';
+import { LayoutDashboard, FileText, MapPin, Store, Users, Trash2, X, LogOut, Sparkles } from 'lucide-react';
 
-export type SidebarView = 'overview' | 'reports' | 'map' | 'market' | 'partners';
+type NavItem = { id: string; label: string; icon: typeof LayoutDashboard; group: string };
+
+const NAV: NavItem[] = [
+  { id: 'overview', label: 'Overview', icon: LayoutDashboard, group: 'Operations' },
+  { id: 'reports', label: 'Reports', icon: FileText, group: 'Operations' },
+  { id: 'map', label: 'Waste Map', icon: MapPin, group: 'Operations' },
+  { id: 'market', label: 'Marketplace', icon: Store, group: 'Business' },
+  { id: 'partners', label: 'Vendors & Collectors', icon: Users, group: 'Business' },
+  { id: 'insights', label: 'Insights', icon: Sparkles, group: 'Analytics' },
+];
+
+export type SidebarView = 'overview' | 'reports' | 'map' | 'market' | 'partners' | 'insights';
 
 interface SidebarProps {
-  active: SidebarView;
-  onNavigate: (view: SidebarView) => void;
+  active: string;
+  onNavigate: (view: string) => void;
   live?: boolean;
   open: boolean;
   onClose: () => void;
@@ -13,27 +24,17 @@ interface SidebarProps {
   onLogout?: () => void;
 }
 
-const NAV: { id: SidebarView; label: string; icon: typeof LayoutDashboard; group: string }[] = [
-  { id: 'overview', label: 'Overview', icon: LayoutDashboard, group: 'Operations' },
-  { id: 'reports', label: 'Reports', icon: FileText, group: 'Operations' },
-  { id: 'map', label: 'Waste Map', icon: MapPin, group: 'Operations' },
-  { id: 'market', label: 'Marketplace', icon: Store, group: 'Business' },
-  { id: 'partners', label: 'Vendors & Collectors', icon: Users, group: 'Business' },
-];
-
 export function Sidebar({ active, onNavigate, live = false, open, onClose, userName, userRole, onLogout }: SidebarProps) {
   let lastGroup = '';
 
   return (
-    <>
+    < >
       <div
         className={`fixed inset-0 bg-black/40 z-40 md:hidden ${open ? 'block' : 'hidden'}`}
         onClick={onClose}
       />
       <aside
-        className={`fixed md:sticky top-0 z-50 md:z-auto h-screen w-64 shrink-0 flex-col border-r border-earth-200 bg-white text-ink ${
-          open ? 'flex' : 'hidden'
-        } md:flex`}
+        className={`fixed md:sticky top-0 z-50 md:z-auto h-screen w-64 shrink-0 flex-col border-r border-earth-200 bg-white text-ink ${open ? 'flex' : 'hidden'} md:flex`}
       >
         <div className="p-5 flex items-center gap-3">
           <div className="p-2 bg-forest-600 text-white rounded-lg shadow-lg">
@@ -54,7 +55,6 @@ export function Sidebar({ active, onNavigate, live = false, open, onClose, userN
 
         <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
           {NAV.map((item) => {
-            const Icon = item.icon;
             const isActive = active === item.id;
             const showGroup = item.group !== lastGroup;
             lastGroup = item.group;
@@ -70,13 +70,9 @@ export function Sidebar({ active, onNavigate, live = false, open, onClose, userN
                     onNavigate(item.id);
                     onClose();
                   }}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'bg-forest-600 text-white shadow-sm'
-                      : 'text-ink-soft hover:bg-earth-50 hover:text-ink'
-                  }`}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive ? 'bg-forest-600 text-white shadow-sm' : 'text-ink-soft hover:bg-earth-50 hover:text-ink'}`}
                 >
-                  <Icon className="w-5 h-5" />
+                  <item.icon className="w-5 h-5" />
                   {item.label}
                 </button>
               </div>
@@ -111,6 +107,6 @@ export function Sidebar({ active, onNavigate, live = false, open, onClose, userN
           </div>
         </div>
       </aside>
-    </>
+    </ >
   );
 }

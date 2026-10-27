@@ -1,10 +1,11 @@
 """
-AI vision-analysis endpoints.
+AI endpoints: vision analysis and the Meterless model proxy status.
 """
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from schemas import VisionAnalysis
+from services.meterless import check as meterless_check
 from services.vision import get_vision_provider
 
 router = APIRouter()
@@ -19,3 +20,19 @@ async def analyze_image(file: UploadFile = File(...)):
 
     provider = get_vision_provider()
     return provider.analyze(image_bytes=image_bytes)
+
+
+@router.get("/meterless/status")
+def meterless_status(ping: bool = True):
+    """Status of the local Meterless model proxy. Always answers 200.
+
+    Fields: status (ok | configured | disabled | not_configured | error),
+    enabled, base_url, model, token_path, token_found, connected,
+    routed_model, latency_ms, reply, detail.
+
+    With ?ping=false only configuration is reported (no network call), so the
+    dashboard can poll cheaply; by default a tiny completion is sent to prove
+    the round-trip.
+    """
+    # sync def: the probe uses `requests`, FastAPI runs this in a threadpool.
+    return meterless_check(ping=ping)

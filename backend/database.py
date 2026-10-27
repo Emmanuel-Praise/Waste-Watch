@@ -8,9 +8,15 @@ without restructuring the application.
 """
 
 import os
+from pathlib import Path
 
+from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import declarative_base, sessionmaker
+
+# Read backend/.env here too (not only in config.py) so entry points that
+# import this module first - seed.py, scripts - pick up DATABASE_URL.
+load_dotenv(Path(__file__).resolve().parent / ".env")
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./bamenda.db")
 

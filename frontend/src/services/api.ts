@@ -78,6 +78,24 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   return handleResponse<DashboardStats>(response, 'Failed to fetch stats');
 }
 
+// Zetaris Insights
+import { Insights } from '../types';
+
+/**
+ * Read-only analytics from the Zetaris gateway.
+ * Returns null when the backend answers 503 (Zetaris not configured), so the
+ * panel can show a "not connected" state instead of pretending there is data.
+ */
+export async function getInsights(params?: { refresh?: boolean }): Promise<Insights | null> {
+  const searchParams = new URLSearchParams();
+  if (params?.refresh) searchParams.set('refresh', String(params.refresh));
+  const query = searchParams.toString();
+
+  const response = await apiFetch(`/insights${query ? `?${query}` : ''}`);
+  if (response.status === 503) return null;
+  return handleResponse<Insights>(response, 'Failed to fetch insights');
+}
+
 // Reports — read-only for the dashboard. New reports arrive via WhatsApp only.
 export async function getReports(params?: {
   status?: Status;

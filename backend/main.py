@@ -13,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 
 from config import MEDIA_DIR
 from database import init_db
-from routers import ai, auth, dashboard, market, partners, reports, voice, whatsapp
+from routers import ai, auth, dashboard, insights, market, partners, reports, voice, whatsapp
 from seed import seed_if_empty
 from services.auth import require_user
 
@@ -25,6 +25,13 @@ async def lifespan(app: FastAPI):
     init_db()
     seed_if_empty()
     MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+    # Initialize Zetaris service (best-effort, non-blocking)
+    try:
+        from services.zetaris import initialize
+        await initialize()
+    except Exception:
+        # Zetaris not configured is OK; core flows remain unaffected
+        pass
     yield
 
 
@@ -64,6 +71,7 @@ app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"]
 app.include_router(market.router, prefix="/api/market", tags=["market"], dependencies=[Depends(require_user)])
 app.include_router(partners.router, prefix="/api/partners", tags=["partners"], dependencies=[Depends(require_user)])
 app.include_router(voice.router, prefix="/api/voice", tags=["voice"], dependencies=[Depends(require_user)])
+app.include_router(insights.router, prefix="/api/insights", tags=["insights"])
 
 # Serve incoming WhatsApp images so the dashboard can display them
 MEDIA_DIR.mkdir(parents=True, exist_ok=True)
@@ -86,4 +94,4 @@ def health_check():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=5000)
